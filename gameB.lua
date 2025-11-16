@@ -45,8 +45,8 @@ function gameB_load()
 	
 	wallfixtures[3] = love.physics.newFixture(wallbodies, wallshapes[3])
 	wallfixtures[3]:setUserData("ceiling")
-	
-	world:setCallbacks(collideB)
+
+	world:setCallbacks(collideB, nil, nil, nil)
 	-----------
 	
 	--FIRST "nextpiece"-
@@ -227,11 +227,11 @@ function gameB_draw()
 	end
 	love.graphics.print( linesscore, 136*scale + offsetX, 80*scale, 0, scale)
 	-----------------------------------------------
-	
-	love.graphics.setColor(255, 0, 0)
+
+	love.graphics.setColor(1, 0, 0)
 
 	--DEBUG--
-	
+
 		for i,v in pairs(tetribodies) do
 			x, y = v:getWorldCenter( )
 			love.graphics.point(x, y)
@@ -241,12 +241,12 @@ function gameB_draw()
 					points[j] = points[j] + x
 					points[j+1] = points[j+1] + y
 				end
-				
+
 				love.graphics.polygon("line",unpack(points))
 			end
 		end
-	
-	love.graphics.setColor(255, 255, 255)
+
+	love.graphics.setColor(1, 1, 1)
 	
 	--FULLSCREEN OFFSET
 	if fullscreen then
@@ -343,9 +343,9 @@ function endblockB()
 		end
 		love.audio.stop(gameover1)
 		love.audio.play(gameover1)
-	
-		wallshapes[2]:destroy()
-		wallshapes[2] = nil
+
+		wallfixtures[2]:destroy()
+		wallfixtures[2] = nil
 	else
 		--Transfer block from 1 to end of tetribodies
 		tetrikind[highestbody()+1] = tetrikind[1]

@@ -24,12 +24,12 @@ function love.load()
 	
 	if fullscreen == false then
 		if scale ~= 5 then
-			love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+			love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 		end
 	else
-		love.graphics.setMode( 0, 0, true, vsync, 0 )
+		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=0} )
 		love.mouse.setVisible( false )
-		desktopwidth, desktopheight = love.graphics.getWidth(), love.graphics.getHeight()
+		desktopwidth, desktopheight = love.graphics.getDimensions()
 		saveoptions()
 		
 		suggestedscale = math.floor((desktopheight-50)/144)
@@ -132,8 +132,8 @@ function love.load()
 	
 	math.randomseed( os.time() )
 	math.random();math.random();math.random() --discarding some as they seem to tend to unrandomness.
-	
-	love.graphics.setBackgroundColor( 255, 255, 255 )
+
+	love.graphics.setBackgroundColor( 1, 1, 1 )
 
 	p1wins = 0
 	p2wins = 0
@@ -383,17 +383,17 @@ function newImageData(path, s)
 	for y = 0, height-1 do
 		for x = 0, width-1 do
 			local oldr, oldg, oldb, olda = imagedata:getPixel(x, y)
-			
+
 			if olda ~= 0 then
-				if oldr > 203 and oldr < 213 then --lightgrey
-					local r = 145 + rr*64
-					local g = 145 + rg*64
-					local b = 145 + rb*64
+				if oldr > 0.796 and oldr < 0.835 then --lightgrey (203-213/255)
+					local r = (145 + rr*64) / 255
+					local g = (145 + rg*64) / 255
+					local b = (145 + rb*64) / 255
 					imagedata:setPixel(x, y, r, g, b, olda)
-				elseif oldr > 107 and oldr < 117 then --darkgrey
-					local r = 73 + rr*43
-					local g = 73 + rg*43
-					local b = 73 + rb*43
+				elseif oldr > 0.419 and oldr < 0.458 then --darkgrey (107-117/255)
+					local r = (73 + rr*43) / 255
+					local g = (73 + rg*43) / 255
+					local b = (73 + rb*43) / 255
 					imagedata:setPixel(x, y, r, g, b, olda)
 				end
 			end
@@ -599,8 +599,7 @@ function saveoptions()
 end
 
 function autosize()
-	local modes = love.graphics.getModes()
-	desktopwidth, desktopheight = modes[1]["width"], modes[1]["height"]
+	desktopwidth, desktopheight = love.window.getDesktopDimensions(1)
 end
 
 function togglefullscreen(fullscr)
@@ -609,10 +608,10 @@ function togglefullscreen(fullscr)
 	if fullscr == false then
 		scale = suggestedscale
 		physicsscale = scale/4
-		love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 	else
-		love.graphics.setMode( 0, 0, true, vsync, 16 )
-		desktopwidth, desktopheight = love.graphics.getWidth(), love.graphics.getHeight()
+		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=16} )
+		desktopwidth, desktopheight = love.graphics.getDimensions()
 		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
 		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
 		if suggestedscale > 5 then
@@ -685,7 +684,7 @@ function savehighscores()
 end
 
 function changescale(i)
-	love.graphics.setMode( 160*i, 144*i, false, vsync, 0 )
+	love.window.setMode( 160*i, 144*i, {vsync=vsync, msaa=0} )
 	nextpieceimg = {}
 	for j = 1, 7 do
 		nextpieceimg[j] = newPaddedImage( "graphics/pieces/"..j..".png", i )
@@ -788,7 +787,21 @@ function getrainbowcolor(i)
 	return {r, g, b}
 end
 
-function love.keypressed( key, unicode )
+function love.textinput(text)
+	if gamestate == "highscoreentry" then
+		local unicode = string.byte(text)
+		if whitelist[unicode] == true then
+			if highscorename[highscoreno]:len() < 6 then
+				cursorblink = true
+				highscorename[highscoreno] = highscorename[highscoreno] .. text
+				love.audio.stop(highscorebeep)
+				love.audio.play(highscorebeep)
+			end
+		end
+	end
+end
+
+function love.keypressed( key, scancode, isrepeat )
 	if gamestate == nil then
 		if controls.check("return", key) then
 			gamestate = "title"
@@ -1120,7 +1133,7 @@ function love.keypressed( key, unicode )
 	elseif gamestate == "gameBmulti" and gamestarted == false then
 		if controls.check("escape", key) then
 			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+				love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 			end
 			gamestate = "multimenu"
 			if musicno < 4 then
@@ -1130,7 +1143,7 @@ function love.keypressed( key, unicode )
 	elseif gamestate == "gameBmulti" and gamestarted == true then
 		if controls.check("escape", key) then
 			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+				love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 			end
 			gamestate = "multimenu"
 		end
@@ -1149,7 +1162,7 @@ function love.keypressed( key, unicode )
 				love.audio.play(music[musicno])
 			end
 			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+				love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 			end
 			gamestate = "multimenu"
 		end
@@ -1175,14 +1188,6 @@ function love.keypressed( key, unicode )
 			if highscorename[highscoreno]:len() > 0 then
 				cursorblink = true
 				highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
-			end
-			
-		elseif whitelist[unicode] == true then
-			if highscorename[highscoreno]:len() < 6 then
-				cursorblink = true
-				highscorename[highscoreno] = highscorename[highscoreno] .. string.char(unicode)
-				love.audio.stop(highscorebeep)
-				love.audio.play(highscorebeep)
 			end
 		end
 	elseif string.sub(gamestate, 1, 6) == "rocket" then
