@@ -393,9 +393,28 @@ function gameA_update(dt)
 	end
 end
 
-function getintersectX(shape, y) --returns left and right collision points to a certain shape on a Y coordinate (or -1, -0.9 if no collision)
-	local lefttime = shape:testSegment( 55, y, 385, y)
-	local righttime = shape:testSegment( 385, y, 55, y)
+function getintersectX(fixture, y) --returns left and right collision points to a certain fixture on a Y coordinate (or -1, -0.9 if no collision)
+	local lefttime = nil
+	local righttime = nil
+
+	-- Ray cast from left to right
+	world:rayCast(55, y, 385, y, function(f, x, yp, xn, yn, fraction)
+		if f == fixture then
+			lefttime = fraction
+			return fraction  -- Stop at first hit
+		end
+		return 1  -- Continue searching
+	end)
+
+	-- Ray cast from right to left
+	world:rayCast(385, y, 55, y, function(f, x, yp, xn, yn, fraction)
+		if f == fixture then
+			righttime = fraction
+			return fraction  -- Stop at first hit
+		end
+		return 1  -- Continue searching
+	end)
+
 	if lefttime ~= nil and righttime ~= nil then
 		local leftx = 330 * lefttime + 55
 		local rightx = 385 - 330 * righttime

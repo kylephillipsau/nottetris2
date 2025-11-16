@@ -7,7 +7,10 @@ function love.load()
 	require "menu"
 	require "failed"
 	require "rocket"
-	
+
+	-- Set default filter to nearest-neighbor to prevent blurriness
+	love.graphics.setDefaultFilter("nearest", "nearest", 0)
+
 	vsync = true
 	
 	autosize()
