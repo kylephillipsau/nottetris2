@@ -455,11 +455,9 @@ function newPaddedImageFont(filename, glyphs)
     if wp ~= w or hp ~= h then
         local padded = love.image.newImageData(wp, hp)
         padded:paste(source, 0, 0)
-		local image = love.graphics.newImage(padded)
-		image:setFilter("nearest", "nearest")
-        return love.graphics.newImageFont(image, glyphs)
+        return love.graphics.newImageFont(padded, glyphs)
     end
-	
+
     return love.graphics.newImageFont(source, glyphs)
 end
 
