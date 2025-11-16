@@ -1102,13 +1102,13 @@ function love.keypressed( key, scancode, isrepeat )
 
 			if pause == true then
 				if musicno < 4 then
-					love.audio.pause(music[musicno])
+					music[musicno]:pause()
 				end
 				love.audio.stop(pausesound)
 				love.audio.play(pausesound)
 			else
 				if musicno < 4 then
-					love.audio.resume(music[musicno])
+					music[musicno]:play()
 				end
 			end
 		end
