@@ -1,6 +1,7 @@
 function love.load()
 	--requires--
 	require "controls"
+	require "pieces"
 	require "gameB"
 	require "gameBmulti"
 	require "gameA"
@@ -112,7 +113,7 @@ function love.load()
 	changevolume(volume)
 	
 	--IMAGES THAT WON'T CHANGE HUE:
-	rainbowgradient = love.graphics.newImage("graphics/rainbow.png")rainbowgradient:setFilter("nearest", "nearest")
+	rainbowgradient = love.graphics.newImage("graphics/rainbow.png")
 	
 	--Whitelist for highscorenames--
 	whitelist = {}
@@ -211,115 +212,71 @@ end
 function loadimages()
 	--IMAGES--
 	--menu--
-	stabyourselflogo = newPaddedImage("graphics/stabyourselflogo.png")
-	logo = newPaddedImage("graphics/logo.png")
-	title = newPaddedImage("graphics/title.png")
-	gametype = newPaddedImage("graphics/gametype.png")
-	mpmenu = newPaddedImage("graphics/mpmenu.png")
-	optionsmenu = newPaddedImage("graphics/options.png")
-	volumeslider = newPaddedImage("graphics/volumeslider.png")
+	stabyourselflogo = newTintedImage("graphics/stabyourselflogo.png")
+	logo = newTintedImage("graphics/logo.png")
+	title = newTintedImage("graphics/title.png")
+	gametype = newTintedImage("graphics/gametype.png")
+	mpmenu = newTintedImage("graphics/mpmenu.png")
+	loadoptionsimages()
 	--game--
-	gamebackground = newPaddedImage("graphics/gamebackground.png")
-	gamebackgroundcutoff = newPaddedImage("graphics/gamebackgroundgamea.png")
-	gamebackgroundmulti = newPaddedImage("graphics/gamebackgroundmulti.png")
-	multiresults = newPaddedImage("graphics/multiresults.png")
+	gamebackground = newTintedImage("graphics/gamebackground.png")
+	gamebackgroundcutoff = newTintedImage("graphics/gamebackgroundgamea.png")
+	gamebackgroundmulti = newTintedImage("graphics/gamebackgroundmulti.png")
+	multiresults = newTintedImage("graphics/multiresults.png")
 	
-	number1 = newPaddedImage("graphics/versus/number1.png")
-	number2 = newPaddedImage("graphics/versus/number2.png")
-	number3 = newPaddedImage("graphics/versus/number3.png")
+	number1 = newTintedImage("graphics/versus/number1.png")
+	number2 = newTintedImage("graphics/versus/number2.png")
+	number3 = newTintedImage("graphics/versus/number3.png")
 	
-	gameover = newPaddedImage("graphics/gameover.png")
-	gameovercutoff = newPaddedImage("graphics/gameovercutoff.png")
-	pausegraphic = newPaddedImage("graphics/pause.png")
-	pausegraphiccutoff = newPaddedImage("graphics/pausecutoff.png")
+	gameover = newTintedImage("graphics/gameover.png")
+	gameovercutoff = newTintedImage("graphics/gameovercutoff.png")
+	pausegraphic = newTintedImage("graphics/pause.png")
+	pausegraphiccutoff = newTintedImage("graphics/pausecutoff.png")
 	
 	--figures--
-	marioidle = newPaddedImage("graphics/versus/marioidle.png")
-	mariojump = newPaddedImage("graphics/versus/mariojump.png")
-	mariocry1 = newPaddedImage("graphics/versus/mariocry1.png")
-	mariocry2 = newPaddedImage("graphics/versus/mariocry2.png")
+	marioidle = newTintedImage("graphics/versus/marioidle.png")
+	mariojump = newTintedImage("graphics/versus/mariojump.png")
+	mariocry1 = newTintedImage("graphics/versus/mariocry1.png")
+	mariocry2 = newTintedImage("graphics/versus/mariocry2.png")
 	
-	luigiidle = newPaddedImage("graphics/versus/luigiidle.png")
-	luigijump = newPaddedImage("graphics/versus/luigijump.png")
-	luigicry1 = newPaddedImage("graphics/versus/luigicry1.png")
-	luigicry2 = newPaddedImage("graphics/versus/luigicry2.png")
+	luigiidle = newTintedImage("graphics/versus/luigiidle.png")
+	luigijump = newTintedImage("graphics/versus/luigijump.png")
+	luigicry1 = newTintedImage("graphics/versus/luigicry1.png")
+	luigicry2 = newTintedImage("graphics/versus/luigicry2.png")
 	
 	--rockets--
-	rocket1 = newPaddedImage("graphics/rocket1.png");rocket1:setFilter( "nearest", "nearest" )
-	rocket2 = newPaddedImage("graphics/rocket2.png")
-	rocket3 = newPaddedImage("graphics/rocket3.png")
-	spaceshuttle = newPaddedImage("graphics/spaceshuttle.png")
+	rocket1 = newTintedImage("graphics/rocket1.png")
+	rocket2 = newTintedImage("graphics/rocket2.png")
+	rocket3 = newTintedImage("graphics/rocket3.png")
+	spaceshuttle = newTintedImage("graphics/spaceshuttle.png")
 	
-	rocketbackground = newPaddedImage("graphics/rocketbackground.png")
-	bigrocketbackground = newPaddedImage("graphics/bigrocketbackground.png")
-	bigrockettakeoffbackground = newPaddedImage("graphics/bigrockettakeoffbackground.png")
+	rocketbackground = newTintedImage("graphics/rocketbackground.png")
+	bigrocketbackground = newTintedImage("graphics/bigrocketbackground.png")
+	bigrockettakeoffbackground = newTintedImage("graphics/bigrockettakeoffbackground.png")
 	
 	
-	smoke1left = newPaddedImage("graphics/smoke1left.png")
-	smoke1right = newPaddedImage("graphics/smoke1right.png")
-	smoke2left = newPaddedImage("graphics/smoke2left.png")
-	smoke2right = newPaddedImage("graphics/smoke2right.png")
+	smoke1left = newTintedImage("graphics/smoke1left.png")
+	smoke1right = newTintedImage("graphics/smoke1right.png")
+	smoke2left = newTintedImage("graphics/smoke2left.png")
+	smoke2right = newTintedImage("graphics/smoke2right.png")
 	
-	fire1 = newPaddedImage("graphics/fire1.png")
-	fire2 = newPaddedImage("graphics/fire2.png")
-	firebig1 = newPaddedImage("graphics/firebig1.png")
-	firebig2 = newPaddedImage("graphics/firebig2.png")
+	fire1 = newTintedImage("graphics/fire1.png")
+	fire2 = newTintedImage("graphics/fire2.png")
+	firebig1 = newTintedImage("graphics/firebig1.png")
+	firebig2 = newTintedImage("graphics/firebig2.png")
 	
-	congratsline = newPaddedImage("graphics/congratsline.png")
+	congratsline = newTintedImage("graphics/congratsline.png")
 	
 	--nextpiece
 	nextpieceimg = {}
 	for i = 1, 7 do
-		nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png", scale )
+		nextpieceimg[i] = newTintedImage( "graphics/pieces/"..i..".png", scale )
 	end
 	
 	--font--
-	tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
-	whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
+	tetrisfont = newTintedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
+	whitefont = newTintedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
 	love.graphics.setFont(tetrisfont)
-	
-	--filters!
-	stabyourselflogo:setFilter("nearest", "nearest")
-	logo:setFilter( "nearest", "nearest" )
-	title:setFilter( "nearest", "nearest" )
-	gametype:setFilter( "nearest", "nearest" )
-	mpmenu:setFilter( "nearest", "nearest" )
-	optionsmenu:setFilter( "nearest", "nearest" )
-	volumeslider:setFilter( "nearest", "nearest" )
-	gamebackground:setFilter( "nearest", "nearest" )
-	gamebackgroundcutoff:setFilter( "nearest", "nearest" )
-	gamebackgroundmulti:setFilter( "nearest", "nearest" )
-	multiresults:setFilter( "nearest", "nearest" )
-	number1:setFilter( "nearest", "nearest" )
-	number2:setFilter( "nearest", "nearest" )
-	number3:setFilter( "nearest", "nearest" )
-	gameover:setFilter( "nearest", "nearest" )
-	gameovercutoff:setFilter( "nearest", "nearest" )
-	pausegraphic:setFilter( "nearest", "nearest" )
-	pausegraphiccutoff:setFilter( "nearest", "nearest" )
-	marioidle:setFilter( "nearest", "nearest" )
-	mariojump:setFilter( "nearest", "nearest" )
-	mariocry1:setFilter( "nearest", "nearest" )
-	mariocry2:setFilter( "nearest", "nearest" )
-	luigiidle:setFilter( "nearest", "nearest" )
-	luigijump:setFilter( "nearest", "nearest" )
-	luigicry1:setFilter( "nearest", "nearest" )
-	luigicry2:setFilter( "nearest", "nearest" )
-	rocket2:setFilter( "nearest", "nearest" )
-	rocket3:setFilter( "nearest", "nearest" )
-	spaceshuttle:setFilter( "nearest", "nearest" )
-	rocketbackground:setFilter( "nearest", "nearest" )
-	bigrocketbackground:setFilter( "nearest", "nearest" )
-	bigrockettakeoffbackground:setFilter( "nearest", "nearest" )
-	smoke1left:setFilter( "nearest", "nearest" )
-	smoke1right:setFilter( "nearest", "nearest" )
-	smoke2left:setFilter( "nearest", "nearest" )
-	smoke2right:setFilter( "nearest", "nearest" )
-	fire1:setFilter( "nearest", "nearest" )
-	fire2:setFilter( "nearest", "nearest" )
-	firebig1:setFilter( "nearest", "nearest" )
-	firebig2:setFilter( "nearest", "nearest" )
-	congratsline:setFilter( "nearest", "nearest" )
 end
 
 function love.update(dt)
@@ -406,62 +363,17 @@ function newImageData(path, s)
 	return imagedata
 end
 
-function newPaddedImage(filename, s)
-    local source = newImageData(filename)
-	
-	if s then
-		source = scaleImagedata(source, s)
-	end
-	
-    local w, h = source:getWidth(), source:getHeight()
-   
-    -- Find closest power-of-two.
-    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-   
-    -- Only pad if needed:
-    if wp ~= w or hp ~= h then
-        local padded = love.image.newImageData(wp, hp)
-        padded:paste(source, 0, 0)
-        return love.graphics.newImage(padded)
-    end
-   
-    return love.graphics.newImage(source)
+function newTintedImage(filename, s) --loads an image tinted with the current hue, optionally scaled by s
+	return love.graphics.newImage(newImageData(filename, s))
 end
 
-function padImagedata(source) --returns image, not imagedata!
-    local w, h = source:getWidth(), source:getHeight()
-   
-    -- Find closest power-of-two.
-    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-   
-    -- Only pad if needed:
-    if wp ~= w or hp ~= h then
-        local padded = love.image.newImageData(wp, hp)
-        padded:paste(source, 0, 0)
-        return love.graphics.newImage(padded)
-    end
-   
-    return love.graphics.newImage(source)
+function newTintedImageFont(filename, glyphs)
+	return love.graphics.newImageFont(newImageData(filename), glyphs)
 end
 
-function newPaddedImageFont(filename, glyphs)
-    local source = newImageData(filename)
-    local w, h = source:getWidth(), source:getHeight()
-   
-    -- Find closest power-of-two.
-    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-   
-    -- Only pad if needed:
-    if wp ~= w or hp ~= h then
-        local padded = love.image.newImageData(wp, hp)
-        padded:paste(source, 0, 0)
-        return love.graphics.newImageFont(padded, glyphs)
-    end
-
-    return love.graphics.newImageFont(source, glyphs)
+function loadoptionsimages() --the options screen previews the hue, so reload its images when it changes
+	optionsmenu = newTintedImage("graphics/options.png")
+	volumeslider = newTintedImage("graphics/volumeslider.png")
 end
 
 function scaleImagedata(imagedata, i)
@@ -688,7 +600,7 @@ function changescale(i)
 	love.window.setMode( 160*i, 144*i, {vsync=vsync, msaa=0} )
 	nextpieceimg = {}
 	for j = 1, 7 do
-		nextpieceimg[j] = newPaddedImage( "graphics/pieces/"..j..".png", i )
+		nextpieceimg[j] = newTintedImage( "graphics/pieces/"..j..".png", i )
 	end
 	physicsscale = i/4
 end
@@ -998,8 +910,7 @@ function love.keypressed( key, scancode, isrepeat )
 				changevolume(volume)
 			elseif optionsselection == 2 then
 				hue = 0.08
-				optionsmenu = newPaddedImage("graphics/options.png");optionsmenu:setFilter( "nearest", "nearest" )
-				volumeslider = newPaddedImage("graphics/volumeslider.png");volumeslider:setFilter( "nearest", "nearest" )
+				loadoptionsimages()
 			elseif optionsselection == 3 then
 				if fullscreen == false then
 					if scale ~= suggestedscale then

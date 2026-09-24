@@ -254,8 +254,7 @@ function menu_update(dt)
 					if hue < 0 then
 						hue = 0
 					end
-					optionsmenu = newPaddedImage("graphics/options.png");optionsmenu:setFilter( "nearest", "nearest" )
-					volumeslider = newPaddedImage("graphics/volumeslider.png");volumeslider:setFilter( "nearest", "nearest" )
+					loadoptionsimages()
 				end
 			elseif love.keyboard.isDown("right") then
 				if hue < 1 then
@@ -263,8 +262,7 @@ function menu_update(dt)
 					if hue > 1 then
 						hue = 1
 					end
-					optionsmenu = newPaddedImage("graphics/options.png");optionsmenu:setFilter( "nearest", "nearest" )
-					volumeslider = newPaddedImage("graphics/volumeslider.png");volumeslider:setFilter( "nearest", "nearest" )
+					loadoptionsimages()
 				end
 			end
 		end

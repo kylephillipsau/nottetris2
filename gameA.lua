@@ -73,68 +73,14 @@ function game_addTetriA() --creates new block (using createtetriA) at 1 and sets
 end	
 
 function createtetriA(i, uniqueid, x, y) --creates block, including body, shapes, image, imagedata and whatnot.
-
 	tetriimagedata[uniqueid] = newImageData( "graphics/pieces/"..i..".png", scale)
-	tetriimages[uniqueid] = padImagedata( tetriimagedata[uniqueid] )
+	tetriimages[uniqueid] = love.graphics.newImage( tetriimagedata[uniqueid] )
 	tetrikind[uniqueid] = i
-	tetrishapes[uniqueid] = {}
-	tetrifixtures[uniqueid] = {}
+	tetribodies[uniqueid], tetrishapes[uniqueid], tetrifixtures[uniqueid] = newpiecebody(world, i, x, y, 1)
 
-	tetribodies[uniqueid] = love.physics.newBody(world, x, y, "dynamic")
-
-	if i == 1 then --I
-		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(-48,0, 32, 32)
-		tetrishapes[uniqueid][2] = love.physics.newRectangleShape(-16,0, 32, 32)
-		tetrishapes[uniqueid][3] = love.physics.newRectangleShape(16,0, 32, 32)
-		tetrishapes[uniqueid][4] = love.physics.newRectangleShape(48,0, 32, 32)
-
-	elseif i == 2 then --J
-		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(-32,-16, 32, 32)
-		tetrishapes[uniqueid][2] = love.physics.newRectangleShape(0,-16, 32, 32)
-		tetrishapes[uniqueid][3] = love.physics.newRectangleShape(32,-16, 32, 32)
-		tetrishapes[uniqueid][4] = love.physics.newRectangleShape(32,16, 32, 32)
-
-	elseif i == 3 then --L
-		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(-32,-16, 32, 32)
-		tetrishapes[uniqueid][2] = love.physics.newRectangleShape(0,-16, 32, 32)
-		tetrishapes[uniqueid][3] = love.physics.newRectangleShape(32,-16, 32, 32)
-		tetrishapes[uniqueid][4] = love.physics.newRectangleShape(-32,16, 32, 32)
-
-	elseif i == 4 then --O
-		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(-16,-16, 32, 32)
-		tetrishapes[uniqueid][2] = love.physics.newRectangleShape(-16,16, 32, 32)
-		tetrishapes[uniqueid][3] = love.physics.newRectangleShape(16,16, 32, 32)
-		tetrishapes[uniqueid][4] = love.physics.newRectangleShape(16,-16, 32, 32)
-
-	elseif i == 5 then --S
-		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(-32,16, 32, 32)
-		tetrishapes[uniqueid][2] = love.physics.newRectangleShape(0,-16, 32, 32)
-		tetrishapes[uniqueid][3] = love.physics.newRectangleShape(32,-16, 32, 32)
-		tetrishapes[uniqueid][4] = love.physics.newRectangleShape(0,16, 32, 32)
-
-	elseif i == 6 then --T
-		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(-32,-16, 32, 32)
-		tetrishapes[uniqueid][2] = love.physics.newRectangleShape(0,-16, 32, 32)
-		tetrishapes[uniqueid][3] = love.physics.newRectangleShape(32,-16, 32, 32)
-		tetrishapes[uniqueid][4] = love.physics.newRectangleShape(0,16, 32, 32)
-
-	elseif i == 7 then --Z
-		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(0,16, 32, 32)
-		tetrishapes[uniqueid][2] = love.physics.newRectangleShape(0,-16, 32, 32)
-		tetrishapes[uniqueid][3] = love.physics.newRectangleShape(32,16, 32, 32)
-		tetrishapes[uniqueid][4] = love.physics.newRectangleShape(-32,-16, 32, 32)
-
+	for i, v in pairs(tetrifixtures[uniqueid]) do
+		v:setUserData({1})
 	end
-
-	-- Create fixtures for all shapes
-	for i, v in pairs(tetrishapes[uniqueid]) do
-		tetrifixtures[uniqueid][i] = love.physics.newFixture(tetribodies[uniqueid], v, 1)
-		tetrifixtures[uniqueid][i]:setUserData({1})
-	end
-
-	tetribodies[uniqueid]:setLinearDamping(0.5)
-	tetribodies[uniqueid]:resetMassData()
-	tetribodies[uniqueid]:setBullet(true)
 end
 
 function gameA_draw()
@@ -613,12 +559,9 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 
 						tetriimagedata[highestbody()] = love.image.newImageData( backupimagedata:getWidth(), backupimagedata:getHeight())
 						tetriimagedata[highestbody()]:paste( backupimagedata, 0, 0, 0, 0, backupimagedata:getWidth(), backupimagedata:getHeight() )
-						tetriimages[highestbody()] = padImagedata( tetriimagedata[highestbody()] )
+						tetriimages[highestbody()] = love.graphics.newImage( tetriimagedata[highestbody()] )
 						tetrikind[highestbody()] = tetrikind[i-ioffset]
 
-						debugimagedata = love.image.newImageData( backupimagedata:getWidth(), backupimagedata:getHeight())
-						debugimagedata:paste(backupimagedata, 0, 0, 0, 0, backupimagedata:getWidth(), backupimagedata:getHeight() )
-						debugimage = padImagedata( debugimagedata )
 
 						--cut the image
 						cutimage(highestbody(), numberofgroups)
@@ -748,7 +691,7 @@ function cutimage(bodyid, numberofgroups) --cuts the image of a body based on it
 		end
 	end
 	
-	tetriimages[bodyid] = padImagedata( tetriimagedata[bodyid] )
+	tetriimages[bodyid] = love.graphics.newImage( tetriimagedata[bodyid] )
 end
 
 function refineshape(line, mult, bodyid, body, shapeid, shape) --refines a shape using the old coordinates and the cutting line
@@ -935,7 +878,7 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 							table.insert(tetricutpos, tetribodies[i]:getY())
 							table.insert(tetricutang, tetribodies[i]:getAngle())
 							table.insert(tetricutkind, tetrikind[i])
-							table.insert(tetricutimg, padImagedata(tetriimagedata[i]))
+							table.insert(tetricutimg, love.graphics.newImage(tetriimagedata[i]))
 						end
 					end
 					
@@ -1198,7 +1141,7 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 					tetrikind[highestbody()+1] = tetrikind[1]
 
 					tetriimagedata[highestbody()+1] = tetriimagedata[1]
-					tetriimages[highestbody()+1] = padImagedata( tetriimagedata[highestbody()+1] )
+					tetriimages[highestbody()+1] = love.graphics.newImage( tetriimagedata[highestbody()+1] )
 
 					tetribodies[highestbody()+1] = tetribodies[1]
 					tetribodies[highestbody()]:setLinearDamping(0.5)
