@@ -1,5 +1,5 @@
 function rocket_load()
-	rocketscores = {}
+	local rocketscores = {}
 	if gameno == 1 then
 		rocketscores[1] = 3000
 		rocketscores[2] = 7000

@@ -28,8 +28,6 @@ function love.load()
 	
 	loadoptions()
 	
-	maxmpscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/274)) 
-	
 	if fullscreen then
 		togglefullscreen(true)
 	elseif scale ~= 5 then --conf.lua opens the window at scale 5
@@ -154,9 +152,6 @@ function love.load()
 	
 	blockstartY = -64 --where new blocks are created
 	losingY = 0 --lose if block 1 collides above this line
-	blockmass = 5 --probably obsolete because body:setMassFromShapes()
-	blockrot = 10
-	blockrestitution = 0.1
 	minmass = 1
 	
 	optionschoices = {"volume", "color", "scale", "fullscrn"}
@@ -520,6 +515,7 @@ function togglefullscreen(fullscr)
 end
 
 function loadhighscores()
+	local fileloc, highdata
 	if gameno == 1 then
 		fileloc = "highscoresA.txt"
 	else
@@ -562,6 +558,7 @@ function newhighscores()
 end
 
 function savehighscores()
+	local fileloc, highdata
 	if gameno == 1 then
 		fileloc = "highscoresA.txt"
 	else
@@ -584,16 +581,6 @@ function changescale(i)
 	physicsscale = i/4
 end
 
-function isElement(t, value)
-	for i, v in pairs(t) do
-		if v == value then
-			return true
-		end
-	end
-	
-	return false
-end
-
 function string:split(delimiter)
 	local result = {}
 	local from  = 1
@@ -607,25 +594,9 @@ function string:split(delimiter)
 	return result
 end
 
-function pythagoras(a, b)
-	c = math.sqrt(a^2 + b^2)
-	if a < 0 or b < 0 then
-		c = -c
-	end
-	return c
-end
-
 function round(num, idp)
   local mult = 10^(idp or 0)
   return math.floor(num * mult + 0.5) / mult
-end
-
-function table2string(mytable)
-	output = {}
-	for i, v in pairs (mytable) do
-		output[i] = mytable[i]
-	end
-	return output
 end
 
 function getPoints2table(shape, body) --returns the shape's points; in world coordinates if the body it's attached to is given

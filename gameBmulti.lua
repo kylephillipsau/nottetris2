@@ -64,6 +64,7 @@ function gameBmulti_load()
 	multipieces = {{}, {}} --pieces of player 1 and 2, indexed by counterp1/counterp2
 
 	--WALLS--
+	local wallbodiesp1, wallshapesp1, wallbodiesp2, wallshapesp2
 	wallbodiesp1, wallshapesp1, wallfxturesp1 = newwalls(world, {
 		{points = {164,0, 164,672, 196,672, 196,0}, data = "leftp1", friction = 0.0001},
 		{points = {516,0, 516,672, 548,672, 548,0}, data = "rightp1", friction = 0.0001, category = 2},
@@ -271,7 +272,7 @@ function gameBmulti_update(dt)
 			steerpiece(multipieces[2][counterp2].body, dt, "p2", difficulty_speed*5)
 		end
 	elseif gamestate == "failingBmulti" then
-		timepassed = love.timer.getTime() - colorizetimer
+		local timepassed = love.timer.getTime() - colorizetimer
 		if timepassed > colorizeduration then
 			gamestate = "failedBmulti"
 
@@ -282,7 +283,7 @@ function gameBmulti_update(dt)
 			love.audio.play(gameover2)
 		end
 	elseif gamestate == "failedBmulti" then
-		clearcheck = true
+		local clearcheck = true
 		for player = 1, 2 do
 			for i, piece in pairs(multipieces[player]) do
 				if piece.body:getY() < 162*mpscale then
@@ -298,23 +299,23 @@ function gameBmulti_update(dt)
 			
 			love.audio.play(musicresults)
 
-			resultsfloorbody = love.physics.newBody(world, 32, -64, "static")
-			resultsfloorshape = love.physics.newPolygonShape(196,448, 196,480, 836,480, 836,448)
-			resultsfloorfixture = love.physics.newFixture(resultsfloorbody, resultsfloorshape)
+			local resultsfloorbody = love.physics.newBody(world, 32, -64, "static")
+			local resultsfloorshape = love.physics.newPolygonShape(196,448, 196,480, 836,480, 836,448)
+			local resultsfloorfixture = love.physics.newFixture(resultsfloorbody, resultsfloorshape)
 			resultsfloorfixture:setUserData("resultsfloor")
 
 			if winner == 1 then
 				mariobody = love.physics.newBody(world, 388, 320, "dynamic")
-				marioshape = love.physics.newRectangleShape(64, 108)
-				mariofixture = love.physics.newFixture(mariobody, marioshape, 1)
+				local marioshape = love.physics.newRectangleShape(64, 108)
+				local mariofixture = love.physics.newFixture(mariobody, marioshape, 1)
 				mariofixture:setMask(3)
 				mariofixture:setUserData("mario")
 				mariobody:setLinearDamping(0.5)
 				mariobody:resetMassData()
 			elseif winner == 2 then
 				luigibody = love.physics.newBody(world, 704, 320, "dynamic")
-				luigishape = love.physics.newRectangleShape(64, 124)
-				luigifixture = love.physics.newFixture(luigibody, luigishape, 1)
+				local luigishape = love.physics.newRectangleShape(64, 124)
+				local luigifixture = love.physics.newFixture(luigibody, luigishape, 1)
 				luigifixture:setMask(2)
 				luigifixture:setUserData("luigi")
 				luigibody:setLinearDamping(0.5)
@@ -323,32 +324,32 @@ function gameBmulti_update(dt)
 			
 			if winner == 1 then
 				mariobody:setY(mariobody:getY()-1)
-				x, y = mariobody:getLinearVelocity( )
+				local x, y = mariobody:getLinearVelocity( )
 				mariobody:setLinearVelocity(x, -300)
 			elseif winner == 2 then
 				luigibody:setY(luigibody:getY()-1)
-				x, y = luigibody:getLinearVelocity( )
+				local x, y = luigibody:getLinearVelocity( )
 				luigibody:setLinearVelocity(x, -300)
 			end
 			jumpframe = true
 		end
 	elseif gamestate == "gameBmulti_results" then
-		jumptimepassed = love.timer.getTime() - jumptimer
+		local jumptimepassed = love.timer.getTime() - jumptimer
 		if jumptimepassed > 2 then
 			jumptimer = love.timer.getTime()
 			jumpframe = true
 			if winner == 1 then
 				mariobody:setY(mariobody:getY()-1)
-				x, y = mariobody:getLinearVelocity( )
+				local x, y = mariobody:getLinearVelocity( )
 				mariobody:setLinearVelocity(x, -300)
 			elseif winner == 2 then
 				luigibody:setY(luigibody:getY()-1)
-				x, y = luigibody:getLinearVelocity( )
+				local x, y = luigibody:getLinearVelocity( )
 				luigibody:setLinearVelocity(x, -300)
 			end
 		end
 		
-		crytimepassed = love.timer.getTime() - crytimer
+		local crytimepassed = love.timer.getTime() - crytimer
 		if crytimepassed > 0.4 then
 			cryframe = not cryframe
 			crytimer = love.timer.getTime()
@@ -356,20 +357,20 @@ function gameBmulti_update(dt)
 		
 		if winner == 1 then
 			if controls.isDown("leftp1") then
-				x, y = mariobody:getWorldCenter()
+				local x, y = mariobody:getWorldCenter()
 				mariobody:applyForce( -30, 0, x, y-8 )
 			end
 			if controls.isDown("rightp1") then
-				x, y = mariobody:getWorldCenter()
+				local x, y = mariobody:getWorldCenter()
 				mariobody:applyForce( 30, 0, x, y-8 )
 			end
 		elseif winner == 2 then
 			if controls.isDown("leftp2") then
-				x, y = luigibody:getWorldCenter()
+				local x, y = luigibody:getWorldCenter()
 				luigibody:applyForce( -30, 0, x, y-8 )
 			end
 			if controls.isDown("rightp2") then
-				x, y = luigibody:getWorldCenter()
+				local x, y = luigibody:getWorldCenter()
 				luigibody:applyForce( 30, 0, x, y-8 )
 			end
 		end
@@ -402,8 +403,7 @@ end
 function game_addTetriBmultip1()
 	counterp1 = counterp1 + 1
 	--NEW BLOCK--
-	randomblockp1 = nextpiecep1
-	createtetriBmulti(1, randomblockp1, counterp1, 388, blockstartY)
+	createtetriBmulti(1, nextpiecep1, counterp1, 388, blockstartY)
 	multipieces[1][counterp1].body:setLinearVelocity(0, difficulty_speed)
 	
 	--RANDOMIZE
@@ -428,8 +428,7 @@ end
 function game_addTetriBmultip2()
 	counterp2 = counterp2 + 1
 	--NEW BLOCK--
-	randomblockp2 = nextpiecep2
-	createtetriBmulti(2, randomblockp2, counterp2, 708, blockstartY)
+	createtetriBmulti(2, nextpiecep2, counterp2, 708, blockstartY)
 	multipieces[2][counterp2].body:setLinearVelocity(0, difficulty_speed)
 	
 	--RANDOMIZE
@@ -454,7 +453,7 @@ function drawmultipieces(player, color) --draws a player's pieces, tinting those
 	for i, piece in pairs(multipieces[player]) do
 		love.graphics.setColor(1, 1, 1)
 		if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
-			timepassed = love.timer.getTime() - colorizetimer
+			local timepassed = love.timer.getTime() - colorizetimer
 			if piece.body:getY() > 576 - (576*(timepassed/colorizeduration)) then
 				love.graphics.setColor(unpack(color))
 			end

@@ -249,7 +249,7 @@ function gameA_update(dt)
 	densityupdatetimer = densityupdatetimer + dt
 	
 	if gamestate == "failingA" then
-		clearcheck = true
+		local clearcheck = true
 		for i, piece in pairs(tetris) do
 			if piece.body:getY() < 648 then
 				clearcheck = false
@@ -280,19 +280,20 @@ function getintersectX(shape, y, body) --returns left and right collision points
 end
 
 function removeline(lineno) --Does all necessary things to clear a line. Refineshape and cutimage included.
-	upperline = (lineno - 1) * 32
-	lowerline = lineno * 32
-	globaline = lineno
-	coordinateproperties = {}
-	numberofbodies = highestbody()
+	local above, inside, below, refined, rotation, v, x1, x2
+	local coordinates, coords, cotable, currentcoords, shapegroups, numberofgroups, backupimagedata
+	local upperleftx, upperrightx, lowerleftx, lowerrightx, linearspeedX, linearspeedY
+	local upperline = (lineno - 1) * 32
+	local lowerline = lineno * 32
+	local coordinateproperties = {}
+	local numberofbodies = highestbody()
 	local ioffset = 0
 	tetris[1] = false --placeholder for the falling piece so table.remove below works
 	for i = 2, numberofbodies do --every body
-		v = tetris[i-ioffset].body
 		if i-ioffset > numberofbodies then
-			print("oh yeah")
 			break
 		end
+		v = tetris[i-ioffset].body
 		if i-ioffset > 1 then
 			refined = false
 			coordinateproperties[i-ioffset] = {}
@@ -680,6 +681,7 @@ function refineshape(line, mult, bodyid, body, shapeid, shape) --refines a shape
 end
 
 function checklinedensity(active) --checks all 18 lines and, if active == true, calls removeline. Also does scoring, sounds and stuff.
+	local leftx, rightx
 	--loop through every shape and add each area to a nax
 	
 	linearea = {}

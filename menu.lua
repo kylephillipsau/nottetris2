@@ -24,6 +24,7 @@ function menu_load()
 end
 
 function menu_draw()
+	local offsetX
 	--FULLSCREEN OFFSET
 	if fullscreen then
 		love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
@@ -354,7 +355,7 @@ function menu_keypressed(key)
 	end
 	
 	elseif gamestate == "menu" then
-	oldmusicno = musicno
+	local oldmusicno = musicno
 	if controls.check("escape", key) then
 		if musicno < 4 then
 			love.audio.stop(music[musicno])
@@ -475,7 +476,7 @@ function menu_keypressed(key)
 	end
 
 	elseif gamestate == "multimenu" then
-	oldmusicno = musicno
+	local oldmusicno = musicno
 	if controls.check("escape", key) then
 		if musicno < 4 then
 			love.audio.stop(music[musicno])

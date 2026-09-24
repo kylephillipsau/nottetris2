@@ -121,7 +121,7 @@ function gameB_update(dt)
 	world:update(dt)
 	
 	if gamestate == "failingB" then
-		clearcheck = true
+		local clearcheck = true
 		for i, piece in pairs(tetris) do
 			if piece.body:getY() < 648 then
 				clearcheck = false
