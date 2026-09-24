@@ -88,33 +88,7 @@ function gameB_draw()
 	---------
 	
 	--SCORES---------------------------------------
-	--"score"--
-	offsetX = 0
-	
-	scorestring = tostring(scorescore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( scorescore, 144*scale + offsetX, 24*scale, 0, scale)
-	
-	
-	--"level"--
-	offsetX = 0
-	
-	scorestring = tostring(levelscore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( levelscore, 136*scale + offsetX, 56*scale, 0, scale)
-	
-	--"tiles"--
-	offsetX = 0
-	
-	scorestring = tostring(linesscore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( linesscore, 136*scale + offsetX, 80*scale, 0, scale)
+	drawscorepanel()
 	-----------------------------------------------
 
 	love.graphics.setColor(1, 1, 1)
@@ -130,6 +104,10 @@ function gameB_draw()
 end
 	
 function gameB_update(dt)
+	if pause then
+		return
+	end
+
 	if newblock then
 		game_addTetriB()
 		newblock = false
@@ -214,3 +192,5 @@ function endblockB()
 		newblock = true
 	end
 end
+
+registerscreen({"gameB", "failingB"}, {update = gameB_update, draw = gameB_draw, keypressed = singleplayer_keypressed})

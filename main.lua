@@ -1,7 +1,16 @@
+screens = {} --gamestate -> {update, draw, keypressed, textinput}
+
+function registerscreen(states, screen) --each screen file registers the gamestates it handles
+	for i, state in ipairs(states) do
+		screens[state] = screen
+	end
+end
+
 function love.load()
+	gamestate = "boot"
 	--requires--
 	require "controls"
-	require "pieces"
+	require "game"
 	require "gameB"
 	require "gameBmulti"
 	require "gameA"
@@ -259,7 +268,7 @@ function loadimages()
 end
 
 function love.update(dt)
-	if gamestate == nil then
+	if gamestate == "boot" then
 		startdelaytime = startdelaytime + dt
 		if startdelaytime >= startdelay then
 			start()
@@ -275,37 +284,22 @@ function love.update(dt)
 		dt = math.min(dt, minfps)
 	end
 	
-	if gamestate == "logo" or gamestate == "credits" or gamestate == "title" or gamestate == "menu" or gamestate == "multimenu" or gamestate == "highscoreentry" or gamestate == "options" then
-		menu_update(dt)
-	elseif gamestate == "gameA" or gamestate == "failingA" then
-		if pause == false then
-			gameA_update(dt)
-		end
-	elseif gamestate == "gameB" or gamestate == "failingB" then
-		if pause == false then
-			gameB_update(dt)
-		end
-		elseif gamestate == "gameBmulti" or gamestate == "failingBmulti" or gamestate == "failedBmulti" or gamestate == "gameBmulti_results" then
-		gameBmulti_update(dt)
-	elseif gamestate == "rocket1" or gamestate == "rocket2" or gamestate == "rocket3" or gamestate == "rocket4" then
-		rocket_update()
+	local screen = screens[gamestate]
+	if screen and screen.update then
+		screen.update(dt)
 	end
 end
 
 function love.draw()
-	if gamestate == "logo" or gamestate == "credits" or gamestate == "title" or gamestate == "menu" or gamestate == "multimenu" or gamestate == "highscoreentry" or gamestate == "options" then
-		menu_draw()
-	elseif gamestate == "gameA" or gamestate == "failingA" then
-		gameA_draw()
-	elseif gamestate == "gameB" or gamestate == "failingB" then
-		gameB_draw()
-	elseif gamestate == "gameBmulti" or gamestate == "failingBmulti" or gamestate == "failedBmulti" or gamestate == "gameBmulti_results" then
-		gameBmulti_draw()
-	elseif gamestate == "failed" then
-		failed_draw()
-	elseif gamestate == "rocket1" or gamestate == "rocket2" or gamestate == "rocket3" or gamestate == "rocket4" then
-		rocket_draw()
+	local screen = screens[gamestate]
+	if screen and screen.draw then
+		screen.draw()
 	end
+end
+
+function printrightaligned(value, x, y, s) --prints value so that its last character starts at x, y (unscaled pixels; s defaults to scale)
+	s = s or scale
+	love.graphics.print(value, x*s - (tostring(value):len()-1)*8*s, y*s, 0, s)
 end
 
 function newImageData(path, s)
@@ -675,19 +669,6 @@ function getrainbowcolor(i)
 	return {r, g, b}
 end
 
-function love.textinput(text)
-	if gamestate == "highscoreentry" then
-		local unicode = string.byte(text)
-		if whitelist[unicode] == true then
-			if highscorename[highscoreno]:len() < 6 then
-				cursorblink = true
-				highscorename[highscoreno] = highscorename[highscoreno] .. text
-				love.audio.stop(highscorebeep)
-				love.audio.play(highscorebeep)
-			end
-		end
-	end
-end
 
 function gamemenu_navigate(key) --moves the cursor on the game type/music grid shared by both game menus
 	if controls.check("left", key) then
@@ -751,294 +732,15 @@ function gamemenu_select(oldmusicno) --applies the game type or music under the 
 end
 
 function love.keypressed( key, scancode, isrepeat )
-	if gamestate == nil then
-		if controls.check("return", key) then
-			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
-			love.audio.play(musictitle)
-			oldtime = love.timer.getTime()
-		end
-		
-	elseif gamestate == "logo" then
-		if controls.check("return", key) then
-			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
-			love.audio.play(musictitle)
-			oldtime = love.timer.getTime()
-		end
-		
-	elseif gamestate == "credits" then
-		if controls.check("return", key) then
-			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
-			love.audio.play(musictitle)
-			oldtime = love.timer.getTime()
-		end
-		
-	elseif gamestate == "title" then
-		if controls.check("return", key) then
-			if playerselection ~= 3 then
-				if soundenabled then
-					love.audio.stop(musictitle)
-					if musicno < 4 then
-						love.audio.play(music[musicno])
-					end
-				end
-			end
-			if playerselection == 1 then
-				gamestate = "menu"
-			elseif playerselection == 2 then
-				gamestate = "multimenu"
-			else
-				gamestate = "options"
-				if soundenabled then
-				love.audio.stop(musictitle)
-				love.audio.play(musicoptions)
-				end
-				optionsselection = 1
-			end
-		elseif controls.check("escape", key) then
-			love.event.quit()
-		elseif controls.check("left", key) and playerselection > 1 then
-			playerselection = playerselection - 1
-		elseif controls.check("right", key) and playerselection < 3 then
-			playerselection = playerselection + 1
-		end
-		
-	elseif gamestate == "menu" then	
-		oldmusicno = musicno
-		if controls.check("escape", key) then
-			if musicno < 4 then
-				love.audio.stop(music[musicno])
-			end
-			gamestate = "title"
-			if soundenabled then
-			love.audio.stop(musictitle)
-			love.audio.play(musictitle)
-			end
-		elseif key == "backspace" then
-			newhighscores()
-		elseif controls.check("return", key) then
-			if gameno == 1 then
-				gameA_load()
-			else
-				gameB_load()
-			end
-		else
-			gamemenu_navigate(key)
-		end
-		if not controls.check("escape", key) then
-			gamemenu_select(oldmusicno)
-		end
-	
-	elseif gamestate == "options" then
-		if controls.check("escape", key) then
-			if soundenabled then
-				love.audio.stop(musicoptions)
-				love.audio.stop(musictitle)
-				love.audio.play(musictitle)
-			end
-			saveoptions()
-			loadimages()
-			gamestate = "title"
-		elseif controls.check("down", key) then
-			optionsselection = optionsselection + 1
-			if optionsselection > #optionschoices then
-				optionsselection = 1
-			end
-			selectblink = true
-			oldtime = love.timer.getTime()
-			
-		elseif controls.check("up", key) then
-			optionsselection = optionsselection - 1
-			if optionsselection == 0 then
-				optionsselection = #optionschoices
-			end
-			selectblink = true
-			oldtime = love.timer.getTime()
-			
-		elseif controls.check("left", key) then
-			if optionsselection == 1 then
-				if volume >= 0.1 then
-					volume = volume - 0.1
-					if volume < 0.1 then
-						volume = 0
-					end
-					changevolume(volume)
-				end
-				
-			elseif optionsselection == 3 then
-				if fullscreen == false then
-					if scale > 1 then
-						scale = scale - 1
-						changescale(scale)
-					end
-				end
-				
-			elseif optionsselection == 4 then
-				if fullscreen == false then
-					togglefullscreen(true)
-				end
-			
-			end
-			
-		elseif controls.check("right", key) then
-			if optionsselection == 1 then
-				if volume <= 0.9 then
-					volume = volume + 0.1
-					changevolume(volume)
-				end
-				
-			elseif optionsselection == 3 then
-				if fullscreen == false then
-					if scale < maxscale then
-						scale = scale + 1
-						changescale(scale)
-					end
-				end
-				
-			elseif optionsselection == 4 then
-				if fullscreen == true then
-					togglefullscreen(false)
-				end
-				
-			end
-			
-		elseif controls.check("return", key) then
-			if optionsselection == 1 then
-				volume = 1
-				changevolume(volume)
-			elseif optionsselection == 2 then
-				hue = 0.08
-				loadoptionsimages()
-			elseif optionsselection == 3 then
-				if fullscreen == false then
-					if scale ~= suggestedscale then
-						scale = suggestedscale
-						changescale(scale)
-					end
-				end
-			elseif optionsselection == 4 then
-				if fullscreen == true then
-					togglefullscreen(false)
-				end
-			end
-			
-		end
-	
-	elseif gamestate == "multimenu" then	
-		oldmusicno = musicno
-		if controls.check("escape", key) then
-			if musicno < 4 then
-				love.audio.stop(music[musicno])
-			end
-			gamestate = "title"
-			love.audio.stop(musictitle)
-			love.audio.play(musictitle)
-		elseif controls.check("return", key) then
-			gameBmulti_load()
-		else
-			gamemenu_navigate(key)
-		end
-		if not controls.check("return", key) and not controls.check("escape", key) then
-			gamemenu_select(oldmusicno)
-		end
-			
-	elseif gamestate == "gameA" or gamestate == "gameB" or gamestate == "failingA" or gamestate == "failingB" then
+	local screen = screens[gamestate]
+	if screen and screen.keypressed then
+		screen.keypressed(key)
+	end
+end
 
-		if controls.check("return", key) then
-			pause = not pause
-
-			if pause == true then
-				if musicno < 4 then
-					music[musicno]:pause()
-				end
-				love.audio.stop(pausesound)
-				love.audio.play(pausesound)
-			else
-				if musicno < 4 then
-					music[musicno]:play()
-				end
-			end
-		end
-		if gamestate == "gameA" or gamestate == "gameB" then
-			if controls.check("escape", key) then
-				oldtime = love.timer.getTime()
-				gamestate = "menu"
-			end
-			
-			if pause == false and (cuttingtimer == lineclearduration or gamestate == "gameB") then
-				--if key == "up" then --STOP ROTATION OF BLOCK (makes it too easy..)
-				--	tetribodies[counter]:setAngularVelocity(0)
-				--end
-				if controls.check("left", key) or controls.check("right", key) then
-					love.audio.stop(blockmove)
-					love.audio.play(blockmove)
-				elseif controls.check("rotateleft", key) or controls.check("rotateright", key) then
-					love.audio.stop(blockturn)
-					love.audio.play(blockturn)
-				end
-			end
-		end
-	elseif gamestate == "gameBmulti" and gamestarted == false then
-		if controls.check("escape", key) then
-			restorewindow()
-			gamestate = "multimenu"
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		end
-	elseif gamestate == "gameBmulti" and gamestarted == true then
-		if controls.check("escape", key) then
-			restorewindow()
-			gamestate = "multimenu"
-		end
-		if controls.check("leftp1", key) or controls.check("rightp1", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
-			love.audio.stop(blockmove)
-			love.audio.play(blockmove)
-		elseif controls.check("rotateleftp1", key) or controls.check("rotaterightp1", key) or controls.check("rotateleftp2", key) or controls.check("rotaterightp2", key) then
-			love.audio.stop(blockturn)
-			love.audio.play(blockturn)
-		end
-		
-	elseif gamestate == "gameBmulti_results" then
-		if controls.check("return", key) or controls.check("escape", key) then
-			if musicno < 4 then
-				love.audio.stop(musicresults)
-				love.audio.play(music[musicno])
-			end
-			restorewindow()
-			gamestate = "multimenu"
-		end
-		
-	elseif gamestate == "failed" then
-		if controls.check("return", key) or controls.check("escape", key) then 
-			love.audio.stop(gameover2)
-			rocket_load()
-		end
-	elseif gamestate == "highscoreentry" then
-		if controls.check("return", key) then
-			gamestate = "menu"
-			savehighscores()
-			if musicchanged == true then
-				love.audio.stop(musichighscore)
-			else
-				love.audio.stop(highscoreintro)
-			end
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		elseif key == "backspace" then
-			if highscorename[highscoreno]:len() > 0 then
-				cursorblink = true
-				highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
-			end
-		end
-	elseif string.sub(gamestate, 1, 6) == "rocket" then
-		if controls.check("return", key) then
-			love.audio.stop(musicrocket1to3)
-			love.audio.stop(musicrocket4)
-			failed_checkhighscores()
-		end
+function love.textinput(text)
+	local screen = screens[gamestate]
+	if screen and screen.textinput then
+		screen.textinput(text)
 	end
 end

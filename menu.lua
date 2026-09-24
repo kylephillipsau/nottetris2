@@ -283,3 +283,236 @@ function menu_update(dt)
 		end
 	end
 end
+
+function menu_textinput(text)
+	if gamestate == "highscoreentry" then
+		local unicode = string.byte(text)
+		if whitelist[unicode] == true then
+			if highscorename[highscoreno]:len() < 6 then
+				cursorblink = true
+				highscorename[highscoreno] = highscorename[highscoreno] .. text
+				love.audio.stop(highscorebeep)
+				love.audio.play(highscorebeep)
+			end
+		end
+	end
+end
+
+function menu_keypressed(key)
+	if gamestate == "boot" then
+	if controls.check("return", key) then
+		gamestate = "title"
+		love.graphics.setBackgroundColor( 0, 0, 0)
+		love.audio.play(musictitle)
+		oldtime = love.timer.getTime()
+	end
+	
+	elseif gamestate == "logo" then
+	if controls.check("return", key) then
+		gamestate = "title"
+		love.graphics.setBackgroundColor( 0, 0, 0)
+		love.audio.play(musictitle)
+		oldtime = love.timer.getTime()
+	end
+	
+	elseif gamestate == "credits" then
+	if controls.check("return", key) then
+		gamestate = "title"
+		love.graphics.setBackgroundColor( 0, 0, 0)
+		love.audio.play(musictitle)
+		oldtime = love.timer.getTime()
+	end
+	
+	elseif gamestate == "title" then
+	if controls.check("return", key) then
+		if playerselection ~= 3 then
+			if soundenabled then
+				love.audio.stop(musictitle)
+				if musicno < 4 then
+					love.audio.play(music[musicno])
+				end
+			end
+		end
+		if playerselection == 1 then
+			gamestate = "menu"
+		elseif playerselection == 2 then
+			gamestate = "multimenu"
+		else
+			gamestate = "options"
+			if soundenabled then
+			love.audio.stop(musictitle)
+			love.audio.play(musicoptions)
+			end
+			optionsselection = 1
+		end
+	elseif controls.check("escape", key) then
+		love.event.quit()
+	elseif controls.check("left", key) and playerselection > 1 then
+		playerselection = playerselection - 1
+	elseif controls.check("right", key) and playerselection < 3 then
+		playerselection = playerselection + 1
+	end
+	
+	elseif gamestate == "menu" then
+	oldmusicno = musicno
+	if controls.check("escape", key) then
+		if musicno < 4 then
+			love.audio.stop(music[musicno])
+		end
+		gamestate = "title"
+		if soundenabled then
+		love.audio.stop(musictitle)
+		love.audio.play(musictitle)
+		end
+	elseif key == "backspace" then
+		newhighscores()
+	elseif controls.check("return", key) then
+		if gameno == 1 then
+			gameA_load()
+		else
+			gameB_load()
+		end
+	else
+		gamemenu_navigate(key)
+	end
+	if not controls.check("escape", key) then
+		gamemenu_select(oldmusicno)
+	end
+
+	elseif gamestate == "options" then
+	if controls.check("escape", key) then
+		if soundenabled then
+			love.audio.stop(musicoptions)
+			love.audio.stop(musictitle)
+			love.audio.play(musictitle)
+		end
+		saveoptions()
+		loadimages()
+		gamestate = "title"
+	elseif controls.check("down", key) then
+		optionsselection = optionsselection + 1
+		if optionsselection > #optionschoices then
+			optionsselection = 1
+		end
+		selectblink = true
+		oldtime = love.timer.getTime()
+		
+	elseif controls.check("up", key) then
+		optionsselection = optionsselection - 1
+		if optionsselection == 0 then
+			optionsselection = #optionschoices
+		end
+		selectblink = true
+		oldtime = love.timer.getTime()
+		
+	elseif controls.check("left", key) then
+		if optionsselection == 1 then
+			if volume >= 0.1 then
+				volume = volume - 0.1
+				if volume < 0.1 then
+					volume = 0
+				end
+				changevolume(volume)
+			end
+			
+		elseif optionsselection == 3 then
+			if fullscreen == false then
+				if scale > 1 then
+					scale = scale - 1
+					changescale(scale)
+				end
+			end
+			
+		elseif optionsselection == 4 then
+			if fullscreen == false then
+				togglefullscreen(true)
+			end
+		
+		end
+		
+	elseif controls.check("right", key) then
+		if optionsselection == 1 then
+			if volume <= 0.9 then
+				volume = volume + 0.1
+				changevolume(volume)
+			end
+			
+		elseif optionsselection == 3 then
+			if fullscreen == false then
+				if scale < maxscale then
+					scale = scale + 1
+					changescale(scale)
+				end
+			end
+			
+		elseif optionsselection == 4 then
+			if fullscreen == true then
+				togglefullscreen(false)
+			end
+			
+		end
+		
+	elseif controls.check("return", key) then
+		if optionsselection == 1 then
+			volume = 1
+			changevolume(volume)
+		elseif optionsselection == 2 then
+			hue = 0.08
+			loadoptionsimages()
+		elseif optionsselection == 3 then
+			if fullscreen == false then
+				if scale ~= suggestedscale then
+					scale = suggestedscale
+					changescale(scale)
+				end
+			end
+		elseif optionsselection == 4 then
+			if fullscreen == true then
+				togglefullscreen(false)
+			end
+		end
+		
+	end
+
+	elseif gamestate == "multimenu" then
+	oldmusicno = musicno
+	if controls.check("escape", key) then
+		if musicno < 4 then
+			love.audio.stop(music[musicno])
+		end
+		gamestate = "title"
+		love.audio.stop(musictitle)
+		love.audio.play(musictitle)
+	elseif controls.check("return", key) then
+		gameBmulti_load()
+	else
+		gamemenu_navigate(key)
+	end
+	if not controls.check("return", key) and not controls.check("escape", key) then
+		gamemenu_select(oldmusicno)
+	end
+		
+	elseif gamestate == "highscoreentry" then
+	if controls.check("return", key) then
+		gamestate = "menu"
+		savehighscores()
+		if musicchanged == true then
+			love.audio.stop(musichighscore)
+		else
+			love.audio.stop(highscoreintro)
+		end
+		if musicno < 4 then
+			love.audio.play(music[musicno])
+		end
+	elseif key == "backspace" then
+		if highscorename[highscoreno]:len() > 0 then
+			cursorblink = true
+			highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
+		end
+	end
+	end
+end
+
+registerscreen({"boot"}, {keypressed = menu_keypressed})
+registerscreen({"logo", "credits", "title", "menu", "multimenu", "options", "highscoreentry"},
+	{update = menu_update, draw = menu_draw, keypressed = menu_keypressed, textinput = menu_textinput})

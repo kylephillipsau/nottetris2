@@ -164,42 +164,18 @@ function gameBmulti_draw()
 	--SCORES P1---------------------------------------
 	
 	--"score"--
-	offsetX = 0
-	
-	scorestring = tostring(scorescorep1)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*mpscale
-	end
-	love.graphics.print( scorescorep1, 36*mpscale + offsetX, 24*mpscale, 0, mpscale)
+	printrightaligned(scorescorep1, 36, 24, mpscale)
 	
 	--"tiles"--
-	offsetX = 0
-	
-	scorestring = tostring(linesscorep1)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*mpscale
-	end
-	love.graphics.print( linesscorep1, 28*mpscale + offsetX, 80*mpscale, 0, mpscale)
+	printrightaligned(linesscorep1, 28, 80, mpscale)
 	-----------------------------------------------
 	
 	--SCORES P2---------------------------------------
 	--"score"--
-	offsetX = 0
-	
-	scorestring = tostring(scorescorep2)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*mpscale
-	end
-	love.graphics.print( scorescorep2, 262*mpscale + offsetX, 24*mpscale, 0, mpscale)
+	printrightaligned(scorescorep2, 262, 24, mpscale)
 	
 	--"tiles"--
-	offsetX = 0
-	
-	scorestring = tostring(linesscorep2)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*mpscale
-	end
-	love.graphics.print( linesscorep2, 254*mpscale + offsetX, 80*mpscale, 0, mpscale)
+	printrightaligned(linesscorep2, 254, 80, mpscale)
 	-----------------------------------------------
 	
 	if gamestate == "gameBmulti_results" then
@@ -617,3 +593,41 @@ function endgame()
 		p2wins = math.mod(p2wins, 100)
 	end
 end
+
+function gameBmulti_keypressed(key)
+	if gamestate == "gameBmulti" and gamestarted == false then
+	if controls.check("escape", key) then
+		restorewindow()
+		gamestate = "multimenu"
+		if musicno < 4 then
+			love.audio.play(music[musicno])
+		end
+	end
+	elseif gamestate == "gameBmulti" and gamestarted == true then
+	if controls.check("escape", key) then
+		restorewindow()
+		gamestate = "multimenu"
+	end
+	if controls.check("leftp1", key) or controls.check("rightp1", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
+		love.audio.stop(blockmove)
+		love.audio.play(blockmove)
+	elseif controls.check("rotateleftp1", key) or controls.check("rotaterightp1", key) or controls.check("rotateleftp2", key) or controls.check("rotaterightp2", key) then
+		love.audio.stop(blockturn)
+		love.audio.play(blockturn)
+	end
+	
+	elseif gamestate == "gameBmulti_results" then
+	if controls.check("return", key) or controls.check("escape", key) then
+		if musicno < 4 then
+			love.audio.stop(musicresults)
+			love.audio.play(music[musicno])
+		end
+		restorewindow()
+		gamestate = "multimenu"
+	end
+	
+	end
+end
+
+registerscreen({"gameBmulti", "failingBmulti", "failedBmulti", "gameBmulti_results"},
+	{update = gameBmulti_update, draw = gameBmulti_draw, keypressed = gameBmulti_keypressed})

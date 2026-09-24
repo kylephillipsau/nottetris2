@@ -173,33 +173,7 @@ function gameA_draw()
 	---------
 	
 	--SCORES---------------------------------------
-	--"score"--
-	offsetX = 0
-	
-	scorestring = tostring(scorescore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( scorescore, 144*scale + offsetX, 24*scale, 0, scale, scale)
-	
-	
-	--"level"--
-	offsetX = 0
-	
-	scorestring = tostring(levelscore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( levelscore, 136*scale + offsetX, 56*scale, 0, scale, scale)
-	
-	--"tiles"--
-	offsetX = 0
-	
-	scorestring = tostring(linesscore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( linesscore, 136*scale + offsetX, 80*scale, 0, scale, scale)
+	drawscorepanel()
 	-----------------------------------------------
 	
 	
@@ -213,6 +187,10 @@ function gameA_draw()
 end
 
 function gameA_update(dt)
+	if pause then
+		return
+	end
+
 	--NEXTPIECE ROTATION (rotating allday erryday)
 	if cuttingtimer == lineclearduration then
 		nextpiecerot = nextpiecerot + nextpiecerotspeed*dt
@@ -1123,3 +1101,5 @@ function endblockA() --handles failing, moving the current block to the end of t
 		nextpiece = math.random(7)
 	end
 end
+
+registerscreen({"gameA", "failingA"}, {update = gameA_update, draw = gameA_draw, keypressed = singleplayer_keypressed})

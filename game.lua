@@ -76,3 +76,49 @@ function newwalls(world, walls) --creates the static walls of a playfield. each 
 	end
 	return body, shapes, fixtures
 end
+
+function drawscorepanel() --score, level and lines in the single player sidebar
+	printrightaligned(scorescore, 144, 24)
+	printrightaligned(levelscore, 136, 56)
+	printrightaligned(linesscore, 136, 80)
+end
+
+function singleplayer_keypressed(key)
+	if gamestate == "gameA" or gamestate == "gameB" or gamestate == "failingA" or gamestate == "failingB" then
+
+	if controls.check("return", key) then
+		pause = not pause
+
+		if pause == true then
+			if musicno < 4 then
+				music[musicno]:pause()
+			end
+			love.audio.stop(pausesound)
+			love.audio.play(pausesound)
+		else
+			if musicno < 4 then
+				music[musicno]:play()
+			end
+		end
+	end
+	if gamestate == "gameA" or gamestate == "gameB" then
+		if controls.check("escape", key) then
+			oldtime = love.timer.getTime()
+			gamestate = "menu"
+		end
+		
+		if pause == false and (cuttingtimer == lineclearduration or gamestate == "gameB") then
+			--if key == "up" then --STOP ROTATION OF BLOCK (makes it too easy..)
+			--	tetribodies[counter]:setAngularVelocity(0)
+			--end
+			if controls.check("left", key) or controls.check("right", key) then
+				love.audio.stop(blockmove)
+				love.audio.play(blockmove)
+			elseif controls.check("rotateleft", key) or controls.check("rotateright", key) then
+				love.audio.stop(blockturn)
+				love.audio.play(blockturn)
+			end
+		end
+	end
+	end
+end
