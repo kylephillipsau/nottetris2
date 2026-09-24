@@ -81,7 +81,6 @@ function createtetriA(i, uniqueid, x, y) --creates block, including body, shapes
 	tetrifixtures[uniqueid] = {}
 
 	tetribodies[uniqueid] = love.physics.newBody(world, x, y, "dynamic")
-	tetribodies[uniqueid]:setAngle(blockrot)
 
 	if i == 1 then --I
 		tetrishapes[uniqueid][1] = love.physics.newRectangleShape(-48,0, 32, 32)
@@ -393,28 +392,14 @@ function gameA_update(dt)
 	end
 end
 
-function getintersectX(fixture, y) --returns left and right collision points to a certain fixture on a Y coordinate (or -1, -0.9 if no collision)
-	local lefttime = nil
-	local righttime = nil
-
-	-- Ray cast from left to right
-	world:rayCast(55, y, 385, y, function(f, x, yp, xn, yn, fraction)
-		if f == fixture then
-			lefttime = fraction
-			return fraction  -- Stop at first hit
-		end
-		return 1  -- Continue searching
-	end)
-
-	-- Ray cast from right to left
-	world:rayCast(385, y, 55, y, function(f, x, yp, xn, yn, fraction)
-		if f == fixture then
-			righttime = fraction
-			return fraction  -- Stop at first hit
-		end
-		return 1  -- Continue searching
-	end)
-
+function getintersectX(shape, y, body) --returns left and right collision points to a certain shape on a Y coordinate (or -1, -0.9 if no collision). Pass the body the shape is attached to, or nil for shapes in world coordinates.
+	local tx, ty, tr = 0, 0, 0
+	if body then
+		tx, ty = body:getPosition()
+		tr = body:getAngle()
+	end
+	local _, _, lefttime = shape:rayCast( 55, y, 385, y, 1, tx, ty, tr)
+	local _, _, righttime = shape:rayCast( 385, y, 55, y, 1, tx, ty, tr)
 	if lefttime ~= nil and righttime ~= nil then
 		local leftx = 330 * lefttime + 55
 		local rightx = 385 - 330 * righttime
@@ -449,7 +434,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 			upperrightx = 0
 			lowerrightx = 0
 			for j, w in pairs(tetrishapes[i-ioffset]) do
-				x1, x2 = getintersectX(tetrishapes[i-ioffset][j], upperline)
+				x1, x2 = getintersectX(tetrishapes[i-ioffset][j], upperline, tetribodies[i-ioffset])
 				
 				if x1 < upperleftx and x1 ~= -1 then
 					upperleftx = x1
@@ -458,7 +443,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 					upperrightx = x2
 				end
 				
-				x1, x2 = getintersectX(tetrishapes[i-ioffset][j], lowerline)
+				x1, x2 = getintersectX(tetrishapes[i-ioffset][j], lowerline, tetribodies[i-ioffset])
 				
 				if x1 < lowerleftx and x1 ~= -1 then
 					lowerleftx = x1
@@ -473,7 +458,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 				inside = false
 				below = false
 				coordinateproperties[i-ioffset][j] = {}
-				coordinates = getPoints2table(w)
+				coordinates = getPoints2table(w, tetribodies[i-ioffset])
 				
 				for y = 1, #coordinates, 2 do --Every Point
 					if coordinates[y+1] < upperline then --POINT ABOVE CUTRECT
@@ -505,7 +490,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 					tetrishapescopy[#tetrishapescopy+1]=refineshape(lowerline, -1, i-ioffset, v, j, w)
 					refined = true
 				else
-					cotable = getPoints2table(tetrishapes[i-ioffset][j])
+					cotable = getPoints2table(tetrishapes[i-ioffset][j], tetribodies[i-ioffset])
 					for var = 1, #cotable, 2 do
 						cotable[var], cotable[var+1] = tetribodies[i-ioffset]:getLocalPoint(cotable[var], cotable[var+1])
 					end
@@ -516,12 +501,10 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 			
 			--create for either above our below; or both if body is cut in center.
 			--gotta set the bodyids here and reuse them in the "check for disconnect shapes" further down
-			for a, b in pairs(tetrishapes[i-ioffset]) do --remove all shapes
-				if tetrishapes[i-ioffset][a] then
-					tetrishapes[i-ioffset][a]:destroy()
-					tetrishapes[i-ioffset][a] = nil
-				end
+			for a, b in pairs(tetrifixtures[i-ioffset]) do --remove all shapes
+				b:destroy()
 			end
+			tetrifixtures[i-ioffset] = {}
 			
 			tetrishapes[i-ioffset] = {}
 			
@@ -530,6 +513,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 					tetribodies[i-ioffset]:destroy()
 					table.remove(tetribodies, i-ioffset)
 					table.remove(tetrishapes, i-ioffset)
+					table.remove(tetrifixtures, i-ioffset)
 					table.remove(tetrikind, i-ioffset)
 					table.remove(tetriimages, i-ioffset)
 					table.remove(tetriimagedata, i-ioffset)
@@ -576,10 +560,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 						tetrifixtures[i-ioffset] = {}
 						for b, c in pairs(tetrishapescopy) do
 							if shapegroups[b] == a then
-								cotable = getPoints2table(tetrishapescopy[b])
-								for var = 1, #cotable, 2 do
-									cotable[var], cotable[var+1] = tetribodies[i-ioffset]:getLocalPoint(cotable[var], cotable[var+1])
-								end
+								cotable = getPoints2table(tetrishapescopy[b]) --already local to the old body, which shares position and angle with the new one
 								tetrishapes[i-ioffset][#tetrishapes[i-ioffset]+1] = love.physics.newPolygonShape(unpack(cotable))
 								tetrifixtures[i-ioffset][#tetrifixtures[i-ioffset]+1] = love.physics.newFixture(tetribodies[i-ioffset], tetrishapes[i-ioffset][#tetrishapes[i-ioffset]], 1)
 								tetrifixtures[i-ioffset][#tetrifixtures[i-ioffset]]:setUserData({i-ioffset}) --set the fixture name for collision
@@ -617,10 +598,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 
 						for b, c in pairs(tetrishapescopy) do
 							if shapegroups[b] == a then
-								cotable = getPoints2table(tetrishapescopy[b])
-								for var = 1, #cotable, 2 do
-									cotable[var], cotable[var+1] = tetribodies[i-ioffset]:getLocalPoint(cotable[var], cotable[var+1])
-								end
+								cotable = getPoints2table(tetrishapescopy[b]) --already local to the old body, which shares position and angle with the new one
 								tetrishapes[highestbody()][#tetrishapes[highestbody()]+1] = love.physics.newPolygonShape(unpack(cotable))
 								tetrifixtures[highestbody()][#tetrifixtures[highestbody()]+1] = love.physics.newFixture(tetribodies[highestbody()], tetrishapes[highestbody()][#tetrishapes[highestbody()]], 1)
 								tetrifixtures[highestbody()][#tetrifixtures[highestbody()]]:setUserData({highestbody()}) --set the fixture name for collision
@@ -668,7 +646,7 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 			--clean up the tables..
 			for a, b in pairs(tetrishapescopy) do
 				if tetrishapescopy[a] then
-					tetrishapescopy[a]:destroy()
+					tetrishapescopy[a]:release()
 					tetrishapescopy[a] = nil
 				end
 			end
@@ -757,7 +735,7 @@ function cutimage(bodyid, numberofgroups) --cuts the image of a body based on it
 			local dummy1, dummy2 = tetribodies[bodyid]:getWorldPoint((x-width/2+.5)*(4/scale), (y-height/2+.5)*(4/scale))
 			local deletepixel = true
 			
-			for i, v in pairs(tetrishapes[bodyid]) do
+			for i, v in pairs(tetrifixtures[bodyid]) do
 				if v:testPoint( dummy1, dummy2 ) then
 					deletepixel = false
 					break
@@ -765,7 +743,7 @@ function cutimage(bodyid, numberofgroups) --cuts the image of a body based on it
 			end
 			
 			if deletepixel then
-				tetriimagedata[bodyid]:setPixel(x, y, 255, 255, 255, 0)
+				tetriimagedata[bodyid]:setPixel(x, y, 1, 1, 1, 0)
 			end
 		end
 	end
@@ -774,9 +752,9 @@ function cutimage(bodyid, numberofgroups) --cuts the image of a body based on it
 end
 
 function refineshape(line, mult, bodyid, body, shapeid, shape) --refines a shape using the old coordinates and the cutting line
-	local leftx, rightx = getintersectX(tetrishapes[bodyid][shapeid], line)
+	local leftx, rightx = getintersectX(tetrishapes[bodyid][shapeid], line, body)
 	if leftx ~= -1 then --Not sure what to do if not
-		local coords = getPoints2table(tetrishapes[bodyid][shapeid])
+		local coords = getPoints2table(tetrishapes[bodyid][shapeid], body)
 		
 		--remove all points inside the cutting zone
 		local lastcutoff
@@ -829,7 +807,7 @@ function refineshape(line, mult, bodyid, body, shapeid, shape) --refines a shape
 			print("#coords")
 		end
 	else
-		local coords = getPoints2table(tetrishapes[bodyid][shapeid])
+		local coords = getPoints2table(tetrishapes[bodyid][shapeid], body)
 		local newcoords={}
 		for i=1,#coords,2 do
 			newcoords[i],newcoords[i+1] = body:getLocalPoint(coords[i], coords[i+1])
@@ -849,7 +827,7 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 	
 	for i = 2, #tetribodies do
 		for j, k in pairs(tetrishapes[i]) do
-			local coords = getPoints2table(k)
+			local coords = getPoints2table(k, tetribodies[i])
 			--Get first and last involved line
 			local firstline = 19
 			local lastline =  0
@@ -864,13 +842,13 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 			
 			for line = firstline, lastline do
 				if line >= 1 and line <= 18 then
-					coords = getPoints2table(k)
+					coords = getPoints2table(k, tetribodies[i])
 					
 					if line > firstline then
 						local offset = 0
 					
 						repeat
-							leftx, rightx = getintersectX(tetrishapes[i][j], (line-1)*32+offset)
+							leftx, rightx = getintersectX(tetrishapes[i][j], (line-1)*32+offset, tetribodies[i])
 							offset = offset + 1
 						until leftx ~= -1 or offset >= 32
 						
@@ -900,7 +878,7 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 					if line < lastline then
 						local offset = 0
 						repeat
-							leftx, rightx = getintersectX(tetrishapes[i][j], (line)*32 - offset)
+							leftx, rightx = getintersectX(tetrishapes[i][j], (line)*32 - offset, tetribodies[i])
 							offset = offset + 1
 						until leftx ~= -1 or offset >= 32
 						

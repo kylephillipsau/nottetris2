@@ -530,7 +530,7 @@ function loadconfig()
 end
 
 function loadoptions()
-	if love.filesystem.exists("options.txt") then
+	if love.filesystem.getInfo("options.txt") then
 		local s = love.filesystem.read("options.txt")
 		local split1 = s:split("\n")
 		for i = 1, #split1 do
@@ -635,7 +635,7 @@ function loadhighscores()
 		fileloc = "highscoresB.txt"
 	end
 	
-	if love.filesystem.exists( fileloc ) then
+	if love.filesystem.getInfo( fileloc ) then
 		
 		highdata = love.filesystem.read( fileloc )
 		highdata = highdata:split(";")
@@ -737,24 +737,11 @@ function table2string(mytable)
 	return output
 end
 
-function getPoints2table(shape)
-	x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8 = shape:getPoints()
-	if x4 == nil then
-		return {x1,y1,x2,y2,x3,y3}
+function getPoints2table(shape, body) --returns the shape's points; in world coordinates if the body it's attached to is given
+	if body then
+		return {body:getWorldPoints(shape:getPoints())}
 	end
-	if x5 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4}
-	end
-	if x6 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5}
-	end
-	if x7 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6}
-	end
-	if x8 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7}
-	end
-	return     {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8}
+	return {shape:getPoints()}
 end
 
 function getrainbowcolor(i)
@@ -850,7 +837,7 @@ function love.keypressed( key, scancode, isrepeat )
 				optionsselection = 1
 			end
 		elseif controls.check("escape", key) then
-			love.event.push("q")
+			love.event.quit()
 		elseif controls.check("left", key) and playerselection > 1 then
 			playerselection = playerselection - 1
 		elseif controls.check("right", key) and playerselection < 3 then

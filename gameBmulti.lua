@@ -121,6 +121,7 @@ function gameBmulti_load()
 	
 	randomtable[1] = math.random(7)
 	starttimer = love.timer.getTime()
+	newtime = starttimer
 	--first piece! hooray.
 end
 
@@ -316,7 +317,16 @@ function gameBmulti_update(dt)
 		nextpiecerot = nextpiecerot - math.pi*2
 	end
 
+	--collisions only flag finished blocks; bodies can't be created while the world is updating
+	endblockp1pending = false
+	endblockp2pending = false
 	world:update(dt)
+	if endblockp1pending then
+		endblockp1()
+	end
+	if endblockp2pending then
+		endblockp2()
+	end
 	newtime = love.timer.getTime()
 	if gamestarted == false then
 		if newtime - starttimer > 3 then
@@ -592,7 +602,6 @@ function createtetriBmultip1(i, uniqueid, x, y)
 	tetrifxturesp1[uniqueid] = {}
 
 	tetribodiesp1[uniqueid] = love.physics.newBody(world, x, y, "dynamic")
-	tetribodiesp1[uniqueid]:setAngle(blockrot)
 
 	if i == 1 then --I
 		tetrishapesp1[uniqueid][1] = love.physics.newRectangleShape(-48,0, 32, 32)
@@ -657,7 +666,6 @@ function createtetriBmultip2(i, uniqueid, x, y)
 	tetrifxturesp2[uniqueid] = {}
 
 	tetribodiesp2[uniqueid] = love.physics.newBody(world, x, y, "dynamic")
-	tetribodiesp2[uniqueid]:setAngle(blockrot)
 
 	if i == 1 then --I
 		tetrishapesp2[uniqueid][1] = love.physics.newRectangleShape(-48,0, 32, 32)
@@ -720,13 +728,13 @@ function collideBmulti(a, b)
 	local aData = a:getUserData()
 	local bData = b:getUserData()
 
-	if (aData == "p1-"..counterp1 and bData ~= "p2-"..counterp2) or (bData == "p1-"..counterp1 and bData ~= "p2-"..counterp2) then --One of the pieces is the current piece and the other isn't the other player's one
+	if (aData == "p1-"..counterp1 and bData ~= "p2-"..counterp2) or (bData == "p1-"..counterp1 and aData ~= "p2-"..counterp2) then --One of the pieces is the current piece and the other isn't the other player's one
 		if p1fail == false and aData ~= "leftp1" and aData ~= "rightp1" and bData ~= "leftp1" and bData ~= "rightp1" then
-			endblockp1()
+			endblockp1pending = true
 		end
 	elseif (aData == "p2-"..counterp2 and bData ~= "p1-"..counterp1) or (bData == "p2-"..counterp2 and aData ~= "p1-"..counterp1) then
 		if p2fail == false and aData ~= "leftp2" and aData ~= "rightp2" and bData ~= "leftp2" and bData ~= "rightp2" then
-			endblockp2()
+			endblockp2pending = true
 		end
 	elseif gamestate == "gameBmulti_results" then
 		if (aData == "mario" and bData == "resultsfloor") or (bData == "mario" and aData == "resultsfloor") then

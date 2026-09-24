@@ -228,24 +228,6 @@ function gameB_draw()
 	love.graphics.print( linesscore, 136*scale + offsetX, 80*scale, 0, scale)
 	-----------------------------------------------
 
-	love.graphics.setColor(1, 0, 0)
-
-	--DEBUG--
-
-		for i,v in pairs(tetribodies) do
-			x, y = v:getWorldCenter( )
-			love.graphics.point(x, y)
-			for k,l in pairs(tetrishapes[i]) do
-				points = {l:getPoints()}
-				for j = 1, #points, 2 do
-					points[j] = points[j] + x
-					points[j+1] = points[j+1] + y
-				end
-
-				love.graphics.polygon("line",unpack(points))
-			end
-		end
-
 	love.graphics.setColor(1, 1, 1)
 	
 	--FULLSCREEN OFFSET
