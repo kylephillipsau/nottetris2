@@ -19,7 +19,7 @@ function gameBmulti_load()
 	mpfullscreenoffsetY = (desktopheight-144*mpscale)/2
 	
 	if not fullscreen then
-		love.window.setMode( 274*mpscale, 144*mpscale, {fullscreen=fullscreen, vsync=vsync, msaa=16} )
+		love.window.setMode( 274*mpscale, 144*mpscale, {fullscreen=fullscreen, vsync=vsync, msaa=0} )
 	end
 	
 	--nextpieces
@@ -67,54 +67,24 @@ function gameBmulti_load()
 	world = love.physics.newWorld(0, 500, true )
 
 
-	wallshapesp1 = {}
-	wallfxturesp1 = {}
 	tetrishapesp1 = {}
 	tetrifxturesp1 = {}
 	tetribodiesp1 = {}
 
-	wallshapesp2 = {}
-	wallfxturesp2 = {}
 	tetrishapesp2 = {}
 	tetrifxturesp2 = {}
 	tetribodiesp2 = {}
-	--WALLS P1--
-	wallbodiesp1 = love.physics.newBody(world, 32, -64, "static")
-
-	wallshapesp1[0] = love.physics.newPolygonShape(164, 0, 164,672, 196,672, 196, 0)
-	wallshapesp1[1] = love.physics.newPolygonShape(516,0, 516,672, 548,672, 548,0)
-	wallshapesp1[2] = love.physics.newPolygonShape(196,640, 196,672, 516,672, 516,640)
-
-	wallfxturesp1[0] = love.physics.newFixture(wallbodiesp1, wallshapesp1[0])
-	wallfxturesp1[0]:setUserData("leftp1")
-	wallfxturesp1[0]:setFriction(0.0001)
-
-	wallfxturesp1[1] = love.physics.newFixture(wallbodiesp1, wallshapesp1[1])
-	wallfxturesp1[1]:setUserData("rightp1")
-	wallfxturesp1[1]:setCategory( 2 )
-	wallfxturesp1[1]:setFriction(0.0001)
-
-	wallfxturesp1[2] = love.physics.newFixture(wallbodiesp1, wallshapesp1[2])
-	wallfxturesp1[2]:setUserData("groundp1")
-
-	--WALLS P2--
-	wallbodiesp2 = love.physics.newBody(world, 32, -64, "static")
-
-	wallshapesp2[0] = love.physics.newPolygonShape(484, 0, 484,672, 516,672, 516, 0)
-	wallshapesp2[1] = love.physics.newPolygonShape(836,0, 836,672, 868,672, 868,0)
-	wallshapesp2[2] = love.physics.newPolygonShape(516,640, 516,672, 836,672, 836,640)
-
-	wallfxturesp2[0] = love.physics.newFixture(wallbodiesp2, wallshapesp2[0])
-	wallfxturesp2[0]:setUserData("leftp2")
-	wallfxturesp2[0]:setCategory( 3 )
-	wallfxturesp2[0]:setFriction(0.0001)
-
-	wallfxturesp2[1] = love.physics.newFixture(wallbodiesp2, wallshapesp2[1])
-	wallfxturesp2[1]:setUserData("rightp2")
-	wallfxturesp2[1]:setFriction(0.0001)
-
-	wallfxturesp2[2] = love.physics.newFixture(wallbodiesp2, wallshapesp2[2])
-	wallfxturesp2[2]:setUserData("groundp2")
+	--WALLS--
+	wallbodiesp1, wallshapesp1, wallfxturesp1 = newwalls(world, {
+		{points = {164,0, 164,672, 196,672, 196,0}, data = "leftp1", friction = 0.0001},
+		{points = {516,0, 516,672, 548,672, 548,0}, data = "rightp1", friction = 0.0001, category = 2},
+		{points = {196,640, 196,672, 516,672, 516,640}, data = "groundp1"},
+	})
+	wallbodiesp2, wallshapesp2, wallfxturesp2 = newwalls(world, {
+		{points = {484,0, 484,672, 516,672, 516,0}, data = "leftp2", friction = 0.0001, category = 3},
+		{points = {836,0, 836,672, 868,672, 868,0}, data = "rightp2", friction = 0.0001},
+		{points = {516,640, 516,672, 836,672, 836,640}, data = "groundp2"},
+	})
 	-----------
 	world:setCallbacks(collideBmulti, nil, nil, nil)
 	-----------

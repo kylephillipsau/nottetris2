@@ -24,34 +24,16 @@ function gameA_load()
 	world = love.physics.newWorld(0, 500, true )
 
 	tetrikind = {}
-	wallshapes = {}
-	wallfixtures = {}
 	tetrishapes = {}
 	tetrifixtures = {}
 	tetribodies = {}
-	offsetshapes = {}
 	tetrishapescopy = {}
-	data = {}
-
-	wallbodies = love.physics.newBody(world, 32, -64, "static") --WALLS
-	wallshapes[0] = love.physics.newPolygonShape(-8, -64, -8,672, 24,672, 24,-64)
-	wallshapes[1] = love.physics.newPolygonShape(352,-64, 352,672, 384,672, 384,-64)
-	wallshapes[2] = love.physics.newPolygonShape(24,640, 24,672, 352,672, 352,640)
-	wallshapes[3] = love.physics.newPolygonShape(-8,-96, 384,-96, 384,-64, -8,-64)
-
-	wallfixtures[0] = love.physics.newFixture(wallbodies, wallshapes[0])
-	wallfixtures[0]:setUserData({"left"})
-	wallfixtures[0]:setFriction(0.00001)
-
-	wallfixtures[1] = love.physics.newFixture(wallbodies, wallshapes[1])
-	wallfixtures[1]:setUserData({"right"})
-	wallfixtures[1]:setFriction(0.00001)
-
-	wallfixtures[2] = love.physics.newFixture(wallbodies, wallshapes[2])
-	wallfixtures[2]:setUserData({"ground"})
-
-	wallfixtures[3] = love.physics.newFixture(wallbodies, wallshapes[3])
-	wallfixtures[3]:setUserData({"ceiling"})
+	wallbodies, wallshapes, wallfixtures = newwalls(world, {
+		{points = {-8,-64, -8,672, 24,672, 24,-64}, data = {"left"}, friction = 0.00001},
+		{points = {352,-64, 352,672, 384,672, 384,-64}, data = {"right"}, friction = 0.00001},
+		{points = {24,640, 24,672, 352,672, 352,640}, data = {"ground"}},
+		{points = {-8,-96, 384,-96, 384,-64, -8,-64}, data = {"ceiling"}},
+	})
 
 	world:setCallbacks(collideA, nil, nil, nil)
 	-----------

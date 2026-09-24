@@ -15,37 +15,16 @@ function love.load()
 	vsync = true
 	
 	autosize()
-	
-	suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
-	if suggestedscale > 5 then
-		suggestedscale = 5
-	end
+	computescales()
 	
 	loadoptions()
 	
-	maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160)) 
 	maxmpscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/274)) 
 	
-	if fullscreen == false then
-		if scale ~= 5 then
-			love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
-		end
-	else
-		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=0} )
-		love.mouse.setVisible( false )
-		desktopwidth, desktopheight = love.graphics.getDimensions()
-		saveoptions()
-		
-		suggestedscale = math.floor((desktopheight-50)/144)
-		if suggestedscale > 5 then
-			suggestedscale = 5
-		end
-		maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160))
-		
-		scale = maxscale
-		
-		fullscreenoffsetX = (desktopwidth-160*scale)/2
-		fullscreenoffsetY = (desktopheight-144*scale)/2
+	if fullscreen then
+		togglefullscreen(true)
+	elseif scale ~= 5 then --conf.lua opens the window at scale 5
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 	end
 	
 	physicsscale = scale/4
@@ -515,6 +494,20 @@ function autosize()
 	desktopwidth, desktopheight = love.window.getDesktopDimensions(1)
 end
 
+function computescales() --largest scale that fits the desktop, and a comfortable default for windowed mode
+	suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
+	if suggestedscale > 5 then
+		suggestedscale = 5
+	end
+	maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160))
+end
+
+function restorewindow() --back to the single player window size after versus mode
+	if not fullscreen then
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
+	end
+end
+
 function togglefullscreen(fullscr)
 	fullscreen = fullscr
 	love.mouse.setVisible( not fullscreen )
@@ -523,14 +516,9 @@ function togglefullscreen(fullscr)
 		physicsscale = scale/4
 		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 	else
-		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=16} )
+		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=0} )
 		desktopwidth, desktopheight = love.graphics.getDimensions()
-		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
-		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
-		if suggestedscale > 5 then
-			suggestedscale = 5
-		end
-		maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160))
+		computescales()
 		
 		scale = maxscale
 		physicsscale = scale/4
@@ -701,6 +689,67 @@ function love.textinput(text)
 	end
 end
 
+function gamemenu_navigate(key) --moves the cursor on the game type/music grid shared by both game menus
+	if controls.check("left", key) then
+		if selection == 2 or selection == 4 or selection == 6 then
+			selection = selection - 1
+			selectblink = true
+			oldtime = love.timer.getTime()
+		end
+	elseif controls.check("right", key) then
+		if selection == 1 or selection == 3 or selection == 5 then
+			selection = selection + 1
+			selectblink = true
+			oldtime = love.timer.getTime()
+		end
+	elseif controls.check("up", key) then
+		if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
+			selection = selection - 2
+			selectblink = true
+			oldtime = love.timer.getTime()
+			if selection < 3 then
+				selection = gameno
+				selectblink = false
+				oldtime = love.timer.getTime()
+			end
+		elseif selection == 1 or selection == 2 then
+			selection = musicno + 2
+			selectblink = false
+			oldtime = love.timer.getTime()
+		end
+	elseif controls.check("down", key) then
+		if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
+			selection = selection + 2
+			selectblink = true
+			oldtime = love.timer.getTime()
+			if selection > 2 and selection < 5 then
+				selection = musicno + 2
+				selectblink = false
+				oldtime = love.timer.getTime()
+			end
+		elseif selection == 5 or selection == 6 then
+			selection = gameno
+			selectblink = false
+			oldtime = love.timer.getTime()
+		end
+	end
+end
+
+function gamemenu_select(oldmusicno) --applies the game type or music under the cursor
+	if selection > 2 then
+		musicno = selection - 2
+		if oldmusicno ~= musicno and oldmusicno ~= 4 then
+			love.audio.stop(music[oldmusicno])
+		end
+		if musicno < 4 then
+			love.audio.play(music[musicno])
+		end
+	else
+		gameno = selection
+		loadhighscores()
+	end
+end
+
 function love.keypressed( key, scancode, isrepeat )
 	if gamestate == nil then
 		if controls.check("return", key) then
@@ -775,60 +824,11 @@ function love.keypressed( key, scancode, isrepeat )
 			else
 				gameB_load()
 			end
-		elseif controls.check("left", key) then
-			if selection == 2 or selection == 4 or selection == 6 then
-				selection = selection - 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("right", key) then
-			if selection == 1 or selection == 3 or selection == 5 then
-				selection = selection + 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("up", key) then
-			if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
-				selection = selection - 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection < 3 then
-					selection = gameno
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 1 or selection == 2 then
-				selection = musicno + 2
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("down", key) then
-			if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
-				selection = selection + 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection > 2 and selection < 5 then
-					selection = musicno + 2
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 5 or selection == 6 then
-				selection = gameno
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
+		else
+			gamemenu_navigate(key)
 		end
-		if selection > 2 and not controls.check("escape", key) then
-			musicno = selection - 2
-			if oldmusicno ~= musicno and oldmusicno ~= 4 then
-				love.audio.stop(music[oldmusicno])
-			end
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		elseif not controls.check("escape", key) then
-			gameno = selection
-			loadhighscores()
+		if not controls.check("escape", key) then
+			gamemenu_select(oldmusicno)
 		end
 	
 	elseif gamestate == "options" then
@@ -937,60 +937,11 @@ function love.keypressed( key, scancode, isrepeat )
 			love.audio.play(musictitle)
 		elseif controls.check("return", key) then
 			gameBmulti_load()
-		elseif controls.check("left", key) then
-			if selection == 2 or selection == 4 or selection == 6 then
-				selection = selection - 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("right", key) then
-			if selection == 1 or selection == 3 or selection == 5 then
-				selection = selection + 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("up", key) then
-			if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
-				selection = selection - 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection < 3 then
-					selection = gameno
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 1 or selection == 2 then
-				selection = musicno + 2
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("down", key) then
-			if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
-				selection = selection + 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection > 2 and selection < 5 then
-					selection = musicno + 2
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 5 or selection == 6 then
-				selection = gameno
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
+		else
+			gamemenu_navigate(key)
 		end
-		if selection > 2 and not controls.check("return", key) and not controls.check("escape", key) then
-			musicno = selection - 2
-			if oldmusicno ~= musicno and oldmusicno ~= 4 then
-				love.audio.stop(music[oldmusicno])
-			end
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		elseif not controls.check("return", key) and not controls.check("escape", key) then
-			gameno = selection
-			loadhighscores()
+		if not controls.check("return", key) and not controls.check("escape", key) then
+			gamemenu_select(oldmusicno)
 		end
 			
 	elseif gamestate == "gameA" or gamestate == "gameB" or gamestate == "failingA" or gamestate == "failingB" then
@@ -1031,9 +982,7 @@ function love.keypressed( key, scancode, isrepeat )
 		end
 	elseif gamestate == "gameBmulti" and gamestarted == false then
 		if controls.check("escape", key) then
-			if not fullscreen then
-				love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
-			end
+			restorewindow()
 			gamestate = "multimenu"
 			if musicno < 4 then
 				love.audio.play(music[musicno])
@@ -1041,9 +990,7 @@ function love.keypressed( key, scancode, isrepeat )
 		end
 	elseif gamestate == "gameBmulti" and gamestarted == true then
 		if controls.check("escape", key) then
-			if not fullscreen then
-				love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
-			end
+			restorewindow()
 			gamestate = "multimenu"
 		end
 		if controls.check("leftp1", key) or controls.check("rightp1", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
@@ -1060,9 +1007,7 @@ function love.keypressed( key, scancode, isrepeat )
 				love.audio.stop(musicresults)
 				love.audio.play(music[musicno])
 			end
-			if not fullscreen then
-				love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
-			end
+			restorewindow()
 			gamestate = "multimenu"
 		end
 		

@@ -58,3 +58,21 @@ function steerpiece(body, dt, player, maxfallspeed) --applies the rotate/move/dr
 		end
 	end
 end
+
+function newwalls(world, walls) --creates the static walls of a playfield. each wall is {points, data, friction, category}; returns body, shapes, fixtures (indexed from 0)
+	local body = love.physics.newBody(world, 32, -64, "static")
+	local shapes = {}
+	local fixtures = {}
+	for i, wall in ipairs(walls) do
+		shapes[i-1] = love.physics.newPolygonShape(unpack(wall.points))
+		fixtures[i-1] = love.physics.newFixture(body, shapes[i-1])
+		fixtures[i-1]:setUserData(wall.data)
+		if wall.category then
+			fixtures[i-1]:setCategory(wall.category)
+		end
+		if wall.friction then
+			fixtures[i-1]:setFriction(wall.friction)
+		end
+	end
+	return body, shapes, fixtures
+end

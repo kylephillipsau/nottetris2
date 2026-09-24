@@ -4,6 +4,9 @@
 -- fixed random seed and simulated keyboard, so every run renders identical
 -- frames and screenshots can be compared against a baseline.
 local scenario = require("scenarios." .. os.getenv("NT_SCENARIO"))
+if scenario.setup then --runs before love.load, e.g. to write a saved options file
+	scenario.setup()
+end
 
 local FRAME = 1/60
 local clock = 0 --simulated seconds since start
