@@ -48,13 +48,7 @@ function gameBmulti_load()
 	counterp1 = 0 --first piece is 1
 	counterp2 = 0 --first piece is 1
 	
-	tetrikindp1 = {}
-	tetriimagedatap1 = {}
-	tetriimagesp1 = {}
 	
-	tetrikindp2 = {}
-	tetriimagedatap2 = {}
-	tetriimagesp2 = {}
 	
 	randomtable = {}
 	nextpiecep1 = nil
@@ -67,13 +61,8 @@ function gameBmulti_load()
 	world = love.physics.newWorld(0, 500, true )
 
 
-	tetrishapesp1 = {}
-	tetrifxturesp1 = {}
-	tetribodiesp1 = {}
+	multipieces = {{}, {}} --pieces of player 1 and 2, indexed by counterp1/counterp2
 
-	tetrishapesp2 = {}
-	tetrifxturesp2 = {}
-	tetribodiesp2 = {}
 	--WALLS--
 	wallbodiesp1, wallshapesp1, wallfxturesp1 = newwalls(world, {
 		{points = {164,0, 164,672, 196,672, 196,0}, data = "leftp1", friction = 0.0001},
@@ -121,20 +110,9 @@ function gameBmulti_draw()
 			love.graphics.draw( number3, 153*mpscale, 48*mpscale, 0, mpscale)
 		end
 	end
-	--tetrishapes P1--
+	--pieces P1--
 
-	for i,v in pairs(tetribodiesp1) do
-		love.graphics.setColor(1, 1, 1)
-		--set color:
-		if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
-			timepassed = love.timer.getTime() - colorizetimer
-			if v:getY() > 576 - (576*(timepassed/colorizeduration)) then
-				love.graphics.setColor(unpack(p1color))
-			end
-		end
-
-		love.graphics.draw( tetriimagesp1[i], v:getX()*physicsmpscale, v:getY()*physicsmpscale, v:getAngle(), 1, 1, piececenter[tetrikindp1[i]][1]*mpscale, piececenter[tetrikindp1[i]][2]*mpscale)
-	end
+	drawmultipieces(1, p1color)
 	
 	if p1fail == false and nextpiecep1 then
 		--Next piece
@@ -142,18 +120,8 @@ function gameBmulti_draw()
 	end
 	
 	----------------
-	--tetrishapes P2--
-	for i,v in pairs(tetribodiesp2) do
-		love.graphics.setColor(1, 1, 1)
-		--set color:
-		if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
-			timepassed = love.timer.getTime() - colorizetimer
-			if v:getY() > 576 - (576*(timepassed/colorizeduration)) then
-				love.graphics.setColor(unpack(p2color))
-			end
-		end
-		love.graphics.draw( tetriimagesp2[i], v:getX()*physicsmpscale, v:getY()*physicsmpscale, v:getAngle(), 1, 1, piececenter[tetrikindp2[i]][1]*mpscale, piececenter[tetrikindp2[i]][2]*mpscale)
-	end
+	--pieces P2--
+	drawmultipieces(2, p2color)
 	----------------
 	love.graphics.setColor(1, 1, 1)
 	
@@ -297,10 +265,10 @@ function gameBmulti_update(dt)
 		
 	elseif gamestate == "gameBmulti" then
 		if p1fail == false then
-			steerpiece(tetribodiesp1[counterp1], dt, "p1", difficulty_speed*5)
+			steerpiece(multipieces[1][counterp1].body, dt, "p1", difficulty_speed*5)
 		end
 		if p2fail == false then
-			steerpiece(tetribodiesp2[counterp2], dt, "p2", difficulty_speed*5)
+			steerpiece(multipieces[2][counterp2].body, dt, "p2", difficulty_speed*5)
 		end
 	elseif gamestate == "failingBmulti" then
 		timepassed = love.timer.getTime() - colorizetimer
@@ -315,15 +283,11 @@ function gameBmulti_update(dt)
 		end
 	elseif gamestate == "failedBmulti" then
 		clearcheck = true
-		for i,v in pairs(tetribodiesp1) do
-			if v:getY() < 162*mpscale then
-				clearcheck = false
-			end
-		end
-		
-		for i,v in pairs(tetribodiesp2) do
-			if v:getY() < 162*mpscale then
-				clearcheck = false
+		for player = 1, 2 do
+			for i, piece in pairs(multipieces[player]) do
+				if piece.body:getY() < 162*mpscale then
+					clearcheck = false
+				end
 			end
 		end
 		
@@ -439,8 +403,8 @@ function game_addTetriBmultip1()
 	counterp1 = counterp1 + 1
 	--NEW BLOCK--
 	randomblockp1 = nextpiecep1
-	createtetriBmultip1(randomblockp1, counterp1, 388, blockstartY)
-	tetribodiesp1[counterp1]:setLinearVelocity(0, difficulty_speed)
+	createtetriBmulti(1, randomblockp1, counterp1, 388, blockstartY)
+	multipieces[1][counterp1].body:setLinearVelocity(0, difficulty_speed)
 	
 	--RANDOMIZE
 	if counterp1 > #randomtable then
@@ -465,8 +429,8 @@ function game_addTetriBmultip2()
 	counterp2 = counterp2 + 1
 	--NEW BLOCK--
 	randomblockp2 = nextpiecep2
-	createtetriBmultip2(randomblockp2, counterp2, 708, blockstartY)
-	tetribodiesp2[counterp2]:setLinearVelocity(0, difficulty_speed)
+	createtetriBmulti(2, randomblockp2, counterp2, 708, blockstartY)
+	multipieces[2][counterp2].body:setLinearVelocity(0, difficulty_speed)
 	
 	--RANDOMIZE
 	if counterp2 > #randomtable then
@@ -475,25 +439,27 @@ function game_addTetriBmultip2()
 	nextpiecep2 = randomtable[counterp2]
 end
 
-function createtetriBmultip1(i, uniqueid, x, y)
-	tetriimagesp1[uniqueid] = newTintedImage( "graphics/pieces/"..i..".png", mpscale )
-	tetrikindp1[uniqueid] = i
-	tetribodiesp1[uniqueid], tetrishapesp1[uniqueid], tetrifxturesp1[uniqueid] = newpiecebody(world, i, x, y, 1)
+function createtetriBmulti(player, i, uniqueid, x, y)
+	local piece = newpiece(world, i, x, y, 1)
+	piece.image = newTintedImage( "graphics/pieces/"..i..".png", mpscale )
+	multipieces[player][uniqueid] = piece
 
-	for i, v in pairs(tetrifxturesp1[uniqueid]) do
-		v:setUserData("p1-"..uniqueid)
-		v:setMask(3)
+	for i, v in pairs(piece.fixtures) do
+		v:setUserData("p"..player.."-"..uniqueid)
+		v:setMask(player == 1 and 3 or 2) --don't collide with the other player's side of the shared middle wall
 	end
 end
 
-function createtetriBmultip2(i, uniqueid, x, y)
-	tetriimagesp2[uniqueid] = newTintedImage( "graphics/pieces/"..i..".png", mpscale )
-	tetrikindp2[uniqueid] = i
-	tetribodiesp2[uniqueid], tetrishapesp2[uniqueid], tetrifxturesp2[uniqueid] = newpiecebody(world, i, x, y, 1)
-
-	for i, v in pairs(tetrifxturesp2[uniqueid]) do
-		v:setUserData("p2-"..uniqueid)
-		v:setMask(2)
+function drawmultipieces(player, color) --draws a player's pieces, tinting those below the rising game over line
+	for i, piece in pairs(multipieces[player]) do
+		love.graphics.setColor(1, 1, 1)
+		if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
+			timepassed = love.timer.getTime() - colorizetimer
+			if piece.body:getY() > 576 - (576*(timepassed/colorizeduration)) then
+				love.graphics.setColor(unpack(color))
+			end
+		end
+		drawpiece(piece, physicsmpscale, mpscale)
 	end
 end
 
@@ -521,12 +487,12 @@ end
 
 function endblockp1()
 	if gameno == 2 then
-		for i, v in pairs(tetrifxturesp1[counterp1]) do --make fixtures pass through the center
+		for i, v in pairs(multipieces[1][counterp1].fixtures) do --make fixtures pass through the center
 			v:setMask(3, 2)
 		end
 	end
 	
-	if tetribodiesp1[counterp1]:getY() < losingY then --P1 hit the top
+	if multipieces[1][counterp1].body:getY() < losingY then --P1 hit the top
 		--FAIL P1--
 		p1fail = true
 		
@@ -545,12 +511,12 @@ end
 
 function endblockp2()
 	if gameno == 2 then
-		for i, v in pairs(tetrifxturesp2[counterp2]) do --make fixtures pass through the center
+		for i, v in pairs(multipieces[2][counterp2].fixtures) do --make fixtures pass through the center
 			v:setMask(2, 3)
 		end
 	end
 	
-	if tetribodiesp2[counterp2]:getY() < losingY then --P2 hit the top
+	if multipieces[2][counterp2].body:getY() < losingY then --P2 hit the top
 		--FAIL P2--
 		p2fail = true
 		

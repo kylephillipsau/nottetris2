@@ -9,19 +9,30 @@ pieceblocks = {
 	{{  0, 16}, {  0,-16}, { 32, 16}, {-32,-16}}, --Z
 }
 
-function newpiecebody(world, kind, x, y, density) --creates the physics body of a piece. returns body, shapes, fixtures
-	local body = love.physics.newBody(world, x, y, "dynamic")
-	local shapes = {}
-	local fixtures = {}
+function newpiece(world, kind, x, y, density) --creates a piece {kind, body, shapes, fixtures}; callers add its image
+	local piece = {kind = kind, shapes = {}, fixtures = {}}
+	piece.body = love.physics.newBody(world, x, y, "dynamic")
 	for i, block in ipairs(pieceblocks[kind]) do
-		shapes[i] = love.physics.newRectangleShape(block[1], block[2], 32, 32)
-		fixtures[i] = love.physics.newFixture(body, shapes[i], density)
+		piece.shapes[i] = love.physics.newRectangleShape(block[1], block[2], 32, 32)
+		piece.fixtures[i] = love.physics.newFixture(piece.body, piece.shapes[i], density)
 	end
-	body:setLinearDamping(0.5)
-	body:setBullet(true)
-	return body, shapes, fixtures
+	piece.body:setLinearDamping(0.5)
+	piece.body:setBullet(true)
+	return piece
 end
 
+function drawpiece(piece, physicsscale, scale) --draws a piece's image at its body
+	local body = piece.body
+	love.graphics.draw( piece.image, body:getX()*physicsscale, body:getY()*physicsscale, body:getAngle(), 1, 1, piececenter[piece.kind][1]*scale, piececenter[piece.kind][2]*scale)
+end
+
+function highestbody() --index of the last landed piece in tetris. tetris[1] is the falling piece and may be missing, so # can't be trusted
+	local i = 2
+	while tetris[i] ~= nil do
+		i = i + 1
+	end
+	return i-1
+end
 function steerpiece(body, dt, player, maxfallspeed) --applies the rotate/move/drop controls of player ("", "p1" or "p2") to a falling piece
 	player = player or ""
 	if controls.isDown("rotateright"..player) then
@@ -109,7 +120,7 @@ function singleplayer_keypressed(key)
 		
 		if pause == false and (cuttingtimer == lineclearduration or gamestate == "gameB") then
 			--if key == "up" then --STOP ROTATION OF BLOCK (makes it too easy..)
-			--	tetribodies[counter]:setAngularVelocity(0)
+			--	tetris[1].body:setAngularVelocity(0)
 			--end
 			if controls.check("left", key) or controls.check("right", key) then
 				love.audio.stop(blockmove)

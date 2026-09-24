@@ -14,11 +14,7 @@ function gameB_load()
 	meter = 30
 	world = love.physics.newWorld(0, 500, true )
 	
-	tetrikind = {}
-	
-	tetrifixtures = {}
-	tetribodies = {}
-	tetrishapes = {}
+	tetris = {}
 	
 	wallbodies, wallshapes, wallfixtures = newwalls(world, {
 		{points = {0,-64, 0,672, 32,672, 32,-64}, data = "left", friction = 0.00001},
@@ -41,18 +37,17 @@ function game_addTetriB()
 	--NEW BLOCK--
 	randomblock = nextpiece
 	createtetriB(randomblock, 1, 224, blockstartY)
-	tetribodies[1]:setLinearVelocity(0, difficulty_speed)
+	tetris[1].body:setLinearVelocity(0, difficulty_speed)
 	
 	--RANDOMIZE
 	nextpiece = math.random(7)
 end
 
 function createtetriB(i, uniqueid, x, y)
-	tetriimages[uniqueid] = newTintedImage( "graphics/pieces/"..i..".png", scale )
-	tetrikind[uniqueid] = i
-	tetribodies[uniqueid], tetrishapes[uniqueid], tetrifixtures[uniqueid] = newpiecebody(world, i, x, y, density)
+	tetris[uniqueid] = newpiece(world, i, x, y, density)
+	tetris[uniqueid].image = newTintedImage( "graphics/pieces/"..i..".png", scale )
 
-	for i, v in pairs(tetrifixtures[uniqueid]) do
+	for i, v in pairs(tetris[uniqueid].fixtures) do
 		v:setUserData(uniqueid)
 	end
 end
@@ -69,10 +64,10 @@ function gameB_draw()
 	--background--
 	love.graphics.draw(gamebackground, 0, 0, 0, scale)
 	---------------
-	--tetrifixtures--
-	for i,v in pairs(tetribodies) do
+	--pieces--
+	for i, piece in pairs(tetris) do
 		if pause == false then
-			love.graphics.draw( tetriimages[i], v:getX()*physicsscale, v:getY()*physicsscale, v:getAngle(), 1, 1, piececenter[tetrikind[i]][1]*scale, piececenter[tetrikind[i]][2]*scale)
+			drawpiece(piece, physicsscale, scale)
 		end
 	end
 	
@@ -120,15 +115,15 @@ function gameB_update(dt)
 	end
 
 	if gamestate == "gameB" then
-		steerpiece(tetribodies[1], dt, "", difficulty_speed*5)
+		steerpiece(tetris[1].body, dt, "", difficulty_speed*5)
 	end
 	
 	world:update(dt)
 	
 	if gamestate == "failingB" then
 		clearcheck = true
-		for i,v in pairs(tetribodies) do
-			if v:getY() < 648 then
+		for i, piece in pairs(tetris) do
+			if piece.body:getY() < 648 then
 				clearcheck = false
 			end
 		end
@@ -151,7 +146,7 @@ function collideB(a, b)
 end
 
 function endblockB()
-	if tetribodies[1]:getY() < losingY then
+	if tetris[1].body:getY() < losingY then
 		--LOSE--
 		gamestate = "failingB"
 		if musicno < 4 then
@@ -163,25 +158,13 @@ function endblockB()
 		wallfixtures[2]:destroy()
 		wallfixtures[2] = nil
 	else
-		--Transfer block from 1 to end of tetribodies
-		tetrikind[highestbody()+1] = tetrikind[1]
-		
-		tetriimages[highestbody()+1] = tetriimages[1]
-		tetribodies[highestbody()+1] = tetribodies[1]
-		
-		tetrifixtures[highestbody()] = {}
-		tetrishapes[highestbody()] = {}
-		
-		for i, v in pairs(tetrifixtures[1]) do
-			tetrishapes[highestbody()][i] = tetrishapes[1][i]
-			tetrishapes[1][i] = nil
-			
-			tetrifixtures[highestbody()][i] = tetrifixtures[1][i]
-			tetrifixtures[highestbody()][i]:setUserData({highestbody()})
-			tetrifixtures[1][i] = nil
+		--Transfer block from 1 to the end of tetris
+		local n = highestbody()+1
+		tetris[n] = tetris[1]
+		tetris[1] = nil
+		for i, v in pairs(tetris[n].fixtures) do
+			v:setUserData({n})
 		end
-		
-		tetribodies[1] = nil
 		---------------------------
 		linesscore = linesscore + 1
 		scorescore = linesscore * 100

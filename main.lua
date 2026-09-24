@@ -38,9 +38,6 @@ function love.load()
 	
 	physicsscale = scale/4
 	
-	--pieces--
-	tetriimages = {}
-	tetriimagedata = {}
 	
 	--SOUND--
 	music = {}
