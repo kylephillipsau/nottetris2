@@ -21,3 +21,40 @@ function newpiecebody(world, kind, x, y, density) --creates the physics body of 
 	body:setBullet(true)
 	return body, shapes, fixtures
 end
+
+function steerpiece(body, dt, player, maxfallspeed) --applies the rotate/move/drop controls of player ("", "p1" or "p2") to a falling piece
+	player = player or ""
+	if controls.isDown("rotateright"..player) then
+		if body:getAngularVelocity() < 3 then
+			body:applyTorque( 70 )
+		end
+	end
+	if controls.isDown("rotateleft"..player) then
+		if body:getAngularVelocity() > -3 then
+			body:applyTorque( -70 )
+		end
+	end
+
+	if controls.isDown("left"..player) then
+		local x, y = body:getWorldCenter()
+		body:applyForce( -70, 0, x, y )
+	end
+	if controls.isDown("right"..player) then
+		local x, y = body:getWorldCenter()
+		body:applyForce( 70, 0, x, y )
+	end
+
+	local x, y = body:getLinearVelocity()
+	if controls.isDown("down"..player) then
+		if y > maxfallspeed then
+			body:setLinearVelocity(x, maxfallspeed)
+		else
+			local cx, cy = body:getWorldCenter()
+			body:applyForce( 0, 20, cx, cy )
+		end
+	else
+		if y > difficulty_speed then
+			body:setLinearVelocity(x, y-2000*dt)
+		end
+	end
+end

@@ -1046,10 +1046,10 @@ function love.keypressed( key, scancode, isrepeat )
 			end
 			gamestate = "multimenu"
 		end
-		if controls.check("left", key) or controls.check("right", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
+		if controls.check("leftp1", key) or controls.check("rightp1", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
 			love.audio.stop(blockmove)
 			love.audio.play(blockmove)
-		elseif controls.check("rotateleft", key) or controls.check("rotateright", key) or controls.check("rotaterightp2", key) or controls.check("rotateleftp2", key) then
+		elseif controls.check("rotateleftp1", key) or controls.check("rotaterightp1", key) or controls.check("rotateleftp2", key) or controls.check("rotaterightp2", key) then
 			love.audio.stop(blockturn)
 			love.audio.play(blockturn)
 		end

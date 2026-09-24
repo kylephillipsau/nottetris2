@@ -270,40 +270,7 @@ function gameA_update(dt)
 	end
 		
 	if gamestate == "gameA" then
-		if controls.isDown("rotateright") then
-			if tetribodies[1]:getAngularVelocity() < 3 then
-				tetribodies[1]:applyTorque( 70 )
-			end
-		end
-		if controls.isDown("rotateleft") then
-			if tetribodies[1]:getAngularVelocity() > -3 then
-				tetribodies[1]:applyTorque( -70 )
-			end
-		end
-	
-		if controls.isDown( "left" ) then
-			local x, y = tetribodies[1]:getWorldCenter()
-			tetribodies[1]:applyForce( -70, 0, x, y )
-		end
-		if controls.isDown( "right" ) then
-			local x, y = tetribodies[1]:getWorldCenter()
-			tetribodies[1]:applyForce( 70, 0, x, y )
-		end
-		
-		local x, y = tetribodies[1]:getLinearVelocity( )
-		if controls.isDown( "down" ) then
-			--commented part limits the blackfallspeed
-			if y > 500 then
-				tetribodies[1]:setLinearVelocity(x, 500)
-			else
-				local cx, cy = tetribodies[1]:getWorldCenter()
-				tetribodies[1]:applyForce( 0, 20, cx, cy )
-			end
-		else
-			if y > difficulty_speed then
-				tetribodies[1]:setLinearVelocity(x, y-2000*dt)
-			end
-		end
+		steerpiece(tetribodies[1], dt, "", 500)
 	end
 	
 	endblock = false
