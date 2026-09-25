@@ -455,10 +455,10 @@ function endgame()
 		winner = 3
 	end
 	if p1wins > 99 then
-		p1wins = math.mod(p1wins, 100)
+		p1wins = p1wins % 100
 	end
 	if p2wins > 99 then
-		p2wins = math.mod(p2wins, 100)
+		p2wins = p2wins % 100
 	end
 end
 
