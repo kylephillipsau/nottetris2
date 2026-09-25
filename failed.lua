@@ -1,7 +1,6 @@
 function failed_load()
 	gamestate = "failed"
-	tetribodies = {} -- CLEAR ALL
-	tetrishapes = {} -- PIECES
+	tetris = {} --clear all pieces
 	love.audio.play(gameover2)
 end
 
@@ -23,33 +22,7 @@ function failed_draw()
 	end
 	
 	--SCORES---------------------------------------
-	--"score"--
-	offsetX = 0
-	
-	scorestring = tostring(scorescore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( scorescore, 144*scale + offsetX, 24*scale, 0, scale)
-	
-	
-	--"level"--
-	offsetX = 0
-	
-	scorestring = tostring(levelscore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( levelscore, 136*scale + offsetX, 56*scale, 0, scale)
-	
-	--"tiles"--
-	offsetX = 0
-	
-	scorestring = tostring(linesscore)
-	for i = 1, scorestring:len() - 1 do
-		offsetX = offsetX - 8*scale
-	end
-	love.graphics.print( linesscore, 136*scale + offsetX, 80*scale, 0, scale)
+	drawscorepanel()
 	-----------------------------------------------
 	
 	
@@ -60,10 +33,6 @@ function failed_draw()
 		--scissor
 		love.graphics.setScissor()
 	end
-end
-
-function failed_update()
-
 end
 
 function failed_checkhighscores()
@@ -100,3 +69,14 @@ function failed_checkhighscores()
 		end
 	end
 end
+
+function failed_keypressed(key)
+	if gamestate == "failed" then
+	if controls.check("return", key) or controls.check("escape", key) then 
+		love.audio.stop(gameover2)
+		rocket_load()
+	end
+	end
+end
+
+registerscreen({"failed"}, {draw = failed_draw, keypressed = failed_keypressed})

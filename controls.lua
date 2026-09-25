@@ -10,12 +10,18 @@ controls.settings.escape = {"key", {"escape"}}
 controls.settings.rotateleft = {"key", {"y", "z", "w"}}
 controls.settings.rotateright = {"key", {"x"}}
 
---player 2
-controls.settings.leftp2 = {"key", {"j"}}
-controls.settings.rightp2 = {"key", {"k"}}
-controls.settings.downp2 = {"key", {"m"}}
-controls.settings.rotateleftp2 = {"key", {"o"}}
-controls.settings.rotaterightp2 = {"key", {"p"}}
+--versus
+controls.settings.leftp1 = {"key", {"a"}}
+controls.settings.rightp1 = {"key", {"d"}}
+controls.settings.downp1 = {"key", {"s"}}
+controls.settings.rotateleftp1 = {"key", {"g"}}
+controls.settings.rotaterightp1 = {"key", {"h"}}
+
+controls.settings.leftp2 = {"key", {"left"}}
+controls.settings.rightp2 = {"key", {"right"}}
+controls.settings.downp2 = {"key", {"down"}}
+controls.settings.rotateleftp2 = {"key", {"kp1"}}
+controls.settings.rotaterightp2 = {"key", {"kp2"}}
 
 function controls.check(t, key)
 	if controls.settings[t][1] == "key" then

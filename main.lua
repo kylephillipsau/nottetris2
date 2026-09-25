@@ -1,54 +1,41 @@
+screens = {} --gamestate -> {update, draw, keypressed, textinput}
+
+function registerscreen(states, screen) --each screen file registers the gamestates it handles
+	for i, state in ipairs(states) do
+		screens[state] = screen
+	end
+end
+
 function love.load()
+	gamestate = "boot"
 	--requires--
 	require "controls"
+	require "game"
 	require "gameB"
 	require "gameBmulti"
 	require "gameA"
 	require "menu"
 	require "failed"
 	require "rocket"
-	
+
+	-- Set default filter to nearest-neighbor to prevent blurriness
+	love.graphics.setDefaultFilter("nearest", "nearest", 0)
+
 	vsync = true
 	
 	autosize()
-	
-	suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
-	if suggestedscale > 5 then
-		suggestedscale = 5
-	end
+	computescales()
 	
 	loadoptions()
 	
-	maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160)) 
-	maxmpscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/274)) 
-	
-	if fullscreen == false then
-		if scale ~= 5 then
-			love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
-		end
-	else
-		love.graphics.setMode( 0, 0, true, vsync, 0 )
-		love.mouse.setVisible( false )
-		desktopwidth, desktopheight = love.graphics.getWidth(), love.graphics.getHeight()
-		saveoptions()
-		
-		suggestedscale = math.floor((desktopheight-50)/144)
-		if suggestedscale > 5 then
-			suggestedscale = 5
-		end
-		maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160))
-		
-		scale = maxscale
-		
-		fullscreenoffsetX = (desktopwidth-160*scale)/2
-		fullscreenoffsetY = (desktopheight-144*scale)/2
+	if fullscreen then
+		togglefullscreen(true)
+	elseif scale ~= 5 then --conf.lua opens the window at scale 5
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 	end
 	
 	physicsscale = scale/4
 	
-	--pieces--
-	tetriimages = {}
-	tetriimagedata = {}
 	
 	--SOUND--
 	music = {}
@@ -93,7 +80,7 @@ function love.load()
 	musicoptions:setVolume( 1 )
 	musicoptions:setLooping( true )
 	
-	boot = love.audio.newSource( "sounds/boot.ogg")
+	boot = love.audio.newSource( "sounds/boot.ogg", "static")
 	blockfall = love.audio.newSource( "sounds/blockfall.ogg", "stream")
 	blockturn = love.audio.newSource( "sounds/turn.ogg", "stream")
 	blockmove = love.audio.newSource( "sounds/move.ogg", "stream")
@@ -109,7 +96,7 @@ function love.load()
 	changevolume(volume)
 	
 	--IMAGES THAT WON'T CHANGE HUE:
-	rainbowgradient = love.graphics.newImage("graphics/rainbow.png")rainbowgradient:setFilter("nearest", "nearest")
+	rainbowgradient = love.graphics.newImage("graphics/rainbow.png")
 	
 	--Whitelist for highscorenames--
 	whitelist = {}
@@ -132,8 +119,8 @@ function love.load()
 	
 	math.randomseed( os.time() )
 	math.random();math.random();math.random() --discarding some as they seem to tend to unrandomness.
-	
-	love.graphics.setBackgroundColor( 255, 255, 255 )
+
+	love.graphics.setBackgroundColor( 1, 1, 1 )
 
 	p1wins = 0
 	p2wins = 0
@@ -165,9 +152,6 @@ function love.load()
 	
 	blockstartY = -64 --where new blocks are created
 	losingY = 0 --lose if block 1 collides above this line
-	blockmass = 5 --probably obsolete because body:setMassFromShapes()
-	blockrot = 10
-	blockrestitution = 0.1
 	minmass = 1
 	
 	optionschoices = {"volume", "color", "scale", "fullscrn"}
@@ -208,119 +192,75 @@ end
 function loadimages()
 	--IMAGES--
 	--menu--
-	stabyourselflogo = newPaddedImage("graphics/stabyourselflogo.png")
-	logo = newPaddedImage("graphics/logo.png")
-	title = newPaddedImage("graphics/title.png")
-	gametype = newPaddedImage("graphics/gametype.png")
-	mpmenu = newPaddedImage("graphics/mpmenu.png")
-	optionsmenu = newPaddedImage("graphics/options.png")
-	volumeslider = newPaddedImage("graphics/volumeslider.png")
+	stabyourselflogo = newTintedImage("graphics/stabyourselflogo.png")
+	logo = newTintedImage("graphics/logo.png")
+	title = newTintedImage("graphics/title.png")
+	gametype = newTintedImage("graphics/gametype.png")
+	mpmenu = newTintedImage("graphics/mpmenu.png")
+	loadoptionsimages()
 	--game--
-	gamebackground = newPaddedImage("graphics/gamebackground.png")
-	gamebackgroundcutoff = newPaddedImage("graphics/gamebackgroundgamea.png")
-	gamebackgroundmulti = newPaddedImage("graphics/gamebackgroundmulti.png")
-	multiresults = newPaddedImage("graphics/multiresults.png")
+	gamebackground = newTintedImage("graphics/gamebackground.png")
+	gamebackgroundcutoff = newTintedImage("graphics/gamebackgroundgamea.png")
+	gamebackgroundmulti = newTintedImage("graphics/gamebackgroundmulti.png")
+	multiresults = newTintedImage("graphics/multiresults.png")
 	
-	number1 = newPaddedImage("graphics/versus/number1.png")
-	number2 = newPaddedImage("graphics/versus/number2.png")
-	number3 = newPaddedImage("graphics/versus/number3.png")
+	number1 = newTintedImage("graphics/versus/number1.png")
+	number2 = newTintedImage("graphics/versus/number2.png")
+	number3 = newTintedImage("graphics/versus/number3.png")
 	
-	gameover = newPaddedImage("graphics/gameover.png")
-	gameovercutoff = newPaddedImage("graphics/gameovercutoff.png")
-	pausegraphic = newPaddedImage("graphics/pause.png")
-	pausegraphiccutoff = newPaddedImage("graphics/pausecutoff.png")
+	gameover = newTintedImage("graphics/gameover.png")
+	gameovercutoff = newTintedImage("graphics/gameovercutoff.png")
+	pausegraphic = newTintedImage("graphics/pause.png")
+	pausegraphiccutoff = newTintedImage("graphics/pausecutoff.png")
 	
 	--figures--
-	marioidle = newPaddedImage("graphics/versus/marioidle.png")
-	mariojump = newPaddedImage("graphics/versus/mariojump.png")
-	mariocry1 = newPaddedImage("graphics/versus/mariocry1.png")
-	mariocry2 = newPaddedImage("graphics/versus/mariocry2.png")
+	marioidle = newTintedImage("graphics/versus/marioidle.png")
+	mariojump = newTintedImage("graphics/versus/mariojump.png")
+	mariocry1 = newTintedImage("graphics/versus/mariocry1.png")
+	mariocry2 = newTintedImage("graphics/versus/mariocry2.png")
 	
-	luigiidle = newPaddedImage("graphics/versus/luigiidle.png")
-	luigijump = newPaddedImage("graphics/versus/luigijump.png")
-	luigicry1 = newPaddedImage("graphics/versus/luigicry1.png")
-	luigicry2 = newPaddedImage("graphics/versus/luigicry2.png")
+	luigiidle = newTintedImage("graphics/versus/luigiidle.png")
+	luigijump = newTintedImage("graphics/versus/luigijump.png")
+	luigicry1 = newTintedImage("graphics/versus/luigicry1.png")
+	luigicry2 = newTintedImage("graphics/versus/luigicry2.png")
 	
 	--rockets--
-	rocket1 = newPaddedImage("graphics/rocket1.png");rocket1:setFilter( "nearest", "nearest" )
-	rocket2 = newPaddedImage("graphics/rocket2.png")
-	rocket3 = newPaddedImage("graphics/rocket3.png")
-	spaceshuttle = newPaddedImage("graphics/spaceshuttle.png")
+	rocket1 = newTintedImage("graphics/rocket1.png")
+	rocket2 = newTintedImage("graphics/rocket2.png")
+	rocket3 = newTintedImage("graphics/rocket3.png")
+	spaceshuttle = newTintedImage("graphics/spaceshuttle.png")
 	
-	rocketbackground = newPaddedImage("graphics/rocketbackground.png")
-	bigrocketbackground = newPaddedImage("graphics/bigrocketbackground.png")
-	bigrockettakeoffbackground = newPaddedImage("graphics/bigrockettakeoffbackground.png")
+	rocketbackground = newTintedImage("graphics/rocketbackground.png")
+	bigrocketbackground = newTintedImage("graphics/bigrocketbackground.png")
+	bigrockettakeoffbackground = newTintedImage("graphics/bigrockettakeoffbackground.png")
 	
 	
-	smoke1left = newPaddedImage("graphics/smoke1left.png")
-	smoke1right = newPaddedImage("graphics/smoke1right.png")
-	smoke2left = newPaddedImage("graphics/smoke2left.png")
-	smoke2right = newPaddedImage("graphics/smoke2right.png")
+	smoke1left = newTintedImage("graphics/smoke1left.png")
+	smoke1right = newTintedImage("graphics/smoke1right.png")
+	smoke2left = newTintedImage("graphics/smoke2left.png")
+	smoke2right = newTintedImage("graphics/smoke2right.png")
 	
-	fire1 = newPaddedImage("graphics/fire1.png")
-	fire2 = newPaddedImage("graphics/fire2.png")
-	firebig1 = newPaddedImage("graphics/firebig1.png")
-	firebig2 = newPaddedImage("graphics/firebig2.png")
+	fire1 = newTintedImage("graphics/fire1.png")
+	fire2 = newTintedImage("graphics/fire2.png")
+	firebig1 = newTintedImage("graphics/firebig1.png")
+	firebig2 = newTintedImage("graphics/firebig2.png")
 	
-	congratsline = newPaddedImage("graphics/congratsline.png")
+	congratsline = newTintedImage("graphics/congratsline.png")
 	
 	--nextpiece
 	nextpieceimg = {}
 	for i = 1, 7 do
-		nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png", scale )
+		nextpieceimg[i] = newTintedImage( "graphics/pieces/"..i..".png", scale )
 	end
 	
 	--font--
-	tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
-	whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
+	tetrisfont = newTintedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
+	whitefont = newTintedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
 	love.graphics.setFont(tetrisfont)
-	
-	--filters!
-	stabyourselflogo:setFilter("nearest", "nearest")
-	logo:setFilter( "nearest", "nearest" )
-	title:setFilter( "nearest", "nearest" )
-	gametype:setFilter( "nearest", "nearest" )
-	mpmenu:setFilter( "nearest", "nearest" )
-	optionsmenu:setFilter( "nearest", "nearest" )
-	volumeslider:setFilter( "nearest", "nearest" )
-	gamebackground:setFilter( "nearest", "nearest" )
-	gamebackgroundcutoff:setFilter( "nearest", "nearest" )
-	gamebackgroundmulti:setFilter( "nearest", "nearest" )
-	multiresults:setFilter( "nearest", "nearest" )
-	number1:setFilter( "nearest", "nearest" )
-	number2:setFilter( "nearest", "nearest" )
-	number3:setFilter( "nearest", "nearest" )
-	gameover:setFilter( "nearest", "nearest" )
-	gameovercutoff:setFilter( "nearest", "nearest" )
-	pausegraphic:setFilter( "nearest", "nearest" )
-	pausegraphiccutoff:setFilter( "nearest", "nearest" )
-	marioidle:setFilter( "nearest", "nearest" )
-	mariojump:setFilter( "nearest", "nearest" )
-	mariocry1:setFilter( "nearest", "nearest" )
-	mariocry2:setFilter( "nearest", "nearest" )
-	luigiidle:setFilter( "nearest", "nearest" )
-	luigijump:setFilter( "nearest", "nearest" )
-	luigicry1:setFilter( "nearest", "nearest" )
-	luigicry2:setFilter( "nearest", "nearest" )
-	rocket2:setFilter( "nearest", "nearest" )
-	rocket3:setFilter( "nearest", "nearest" )
-	spaceshuttle:setFilter( "nearest", "nearest" )
-	rocketbackground:setFilter( "nearest", "nearest" )
-	bigrocketbackground:setFilter( "nearest", "nearest" )
-	bigrockettakeoffbackground:setFilter( "nearest", "nearest" )
-	smoke1left:setFilter( "nearest", "nearest" )
-	smoke1right:setFilter( "nearest", "nearest" )
-	smoke2left:setFilter( "nearest", "nearest" )
-	smoke2right:setFilter( "nearest", "nearest" )
-	fire1:setFilter( "nearest", "nearest" )
-	fire2:setFilter( "nearest", "nearest" )
-	firebig1:setFilter( "nearest", "nearest" )
-	firebig2:setFilter( "nearest", "nearest" )
-	congratsline:setFilter( "nearest", "nearest" )
 end
 
 function love.update(dt)
-	if gamestate == nil then
+	if gamestate == "boot" then
 		startdelaytime = startdelaytime + dt
 		if startdelaytime >= startdelay then
 			start()
@@ -336,37 +276,22 @@ function love.update(dt)
 		dt = math.min(dt, minfps)
 	end
 	
-	if gamestate == "logo" or gamestate == "credits" or gamestate == "title" or gamestate == "menu" or gamestate == "multimenu" or gamestate == "highscoreentry" or gamestate == "options" then
-		menu_update(dt)
-	elseif gamestate == "gameA" or gamestate == "failingA" then
-		if pause == false then
-			gameA_update(dt)
-		end
-	elseif gamestate == "gameB" or gamestate == "failingB" then
-		if pause == false then
-			gameB_update(dt)
-		end
-		elseif gamestate == "gameBmulti" or gamestate == "failingBmulti" or gamestate == "failedBmulti" or gamestate == "gameBmulti_results" then
-		gameBmulti_update(dt)
-	elseif gamestate == "rocket1" or gamestate == "rocket2" or gamestate == "rocket3" or gamestate == "rocket4" then
-		rocket_update()
+	local screen = screens[gamestate]
+	if screen and screen.update then
+		screen.update(dt)
 	end
 end
 
 function love.draw()
-	if gamestate == "logo" or gamestate == "credits" or gamestate == "title" or gamestate == "menu" or gamestate == "multimenu" or gamestate == "highscoreentry" or gamestate == "options" then
-		menu_draw()
-	elseif gamestate == "gameA" or gamestate == "failingA" then
-		gameA_draw()
-	elseif gamestate == "gameB" or gamestate == "failingB" then
-		gameB_draw()
-	elseif gamestate == "gameBmulti" or gamestate == "failingBmulti" or gamestate == "failedBmulti" or gamestate == "gameBmulti_results" then
-		gameBmulti_draw()
-	elseif gamestate == "failed" then
-		failed_draw()
-	elseif gamestate == "rocket1" or gamestate == "rocket2" or gamestate == "rocket3" or gamestate == "rocket4" then
-		rocket_draw()
+	local screen = screens[gamestate]
+	if screen and screen.draw then
+		screen.draw()
 	end
+end
+
+function printrightaligned(value, x, y, s) --prints value so that its last character starts at x, y (unscaled pixels; s defaults to scale)
+	s = s or scale
+	love.graphics.print(value, x*s - (tostring(value):len()-1)*8*s, y*s, 0, s)
 end
 
 function newImageData(path, s)
@@ -383,17 +308,17 @@ function newImageData(path, s)
 	for y = 0, height-1 do
 		for x = 0, width-1 do
 			local oldr, oldg, oldb, olda = imagedata:getPixel(x, y)
-			
+
 			if olda ~= 0 then
-				if oldr > 203 and oldr < 213 then --lightgrey
-					local r = 145 + rr*64
-					local g = 145 + rg*64
-					local b = 145 + rb*64
+				if oldr > 0.796 and oldr < 0.835 then --lightgrey (203-213/255)
+					local r = (145 + rr*64) / 255
+					local g = (145 + rg*64) / 255
+					local b = (145 + rb*64) / 255
 					imagedata:setPixel(x, y, r, g, b, olda)
-				elseif oldr > 107 and oldr < 117 then --darkgrey
-					local r = 73 + rr*43
-					local g = 73 + rg*43
-					local b = 73 + rb*43
+				elseif oldr > 0.419 and oldr < 0.458 then --darkgrey (107-117/255)
+					local r = (73 + rr*43) / 255
+					local g = (73 + rg*43) / 255
+					local b = (73 + rb*43) / 255
 					imagedata:setPixel(x, y, r, g, b, olda)
 				end
 			end
@@ -403,64 +328,17 @@ function newImageData(path, s)
 	return imagedata
 end
 
-function newPaddedImage(filename, s)
-    local source = newImageData(filename)
-	
-	if s then
-		source = scaleImagedata(source, s)
-	end
-	
-    local w, h = source:getWidth(), source:getHeight()
-   
-    -- Find closest power-of-two.
-    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-   
-    -- Only pad if needed:
-    if wp ~= w or hp ~= h then
-        local padded = love.image.newImageData(wp, hp)
-        padded:paste(source, 0, 0)
-        return love.graphics.newImage(padded)
-    end
-   
-    return love.graphics.newImage(source)
+function newTintedImage(filename, s) --loads an image tinted with the current hue, optionally scaled by s
+	return love.graphics.newImage(newImageData(filename, s))
 end
 
-function padImagedata(source) --returns image, not imagedata!
-    local w, h = source:getWidth(), source:getHeight()
-   
-    -- Find closest power-of-two.
-    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-   
-    -- Only pad if needed:
-    if wp ~= w or hp ~= h then
-        local padded = love.image.newImageData(wp, hp)
-        padded:paste(source, 0, 0)
-        return love.graphics.newImage(padded)
-    end
-   
-    return love.graphics.newImage(source)
+function newTintedImageFont(filename, glyphs)
+	return love.graphics.newImageFont(newImageData(filename), glyphs)
 end
 
-function newPaddedImageFont(filename, glyphs)
-    local source = newImageData(filename)
-    local w, h = source:getWidth(), source:getHeight()
-   
-    -- Find closest power-of-two.
-    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-   
-    -- Only pad if needed:
-    if wp ~= w or hp ~= h then
-        local padded = love.image.newImageData(wp, hp)
-        padded:paste(source, 0, 0)
-		local image = love.graphics.newImage(padded)
-		image:setFilter("nearest", "nearest")
-        return love.graphics.newImageFont(image, glyphs)
-    end
-	
-    return love.graphics.newImageFont(source, glyphs)
+function loadoptionsimages() --the options screen previews the hue, so reload its images when it changes
+	optionsmenu = newTintedImage("graphics/options.png")
+	volumeslider = newTintedImage("graphics/volumeslider.png")
 end
 
 function scaleImagedata(imagedata, i)
@@ -529,7 +407,7 @@ function loadconfig()
 end
 
 function loadoptions()
-	if love.filesystem.exists("options.txt") then
+	if love.filesystem.getInfo("options.txt") then
 		local s = love.filesystem.read("options.txt")
 		local split1 = s:split("\n")
 		for i = 1, #split1 do
@@ -599,8 +477,21 @@ function saveoptions()
 end
 
 function autosize()
-	local modes = love.graphics.getModes()
-	desktopwidth, desktopheight = modes[1]["width"], modes[1]["height"]
+	desktopwidth, desktopheight = love.window.getDesktopDimensions(1)
+end
+
+function computescales() --largest scale that fits the desktop, and a comfortable default for windowed mode
+	suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
+	if suggestedscale > 5 then
+		suggestedscale = 5
+	end
+	maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160))
+end
+
+function restorewindow() --back to the single player window size after versus mode
+	if not fullscreen then
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
+	end
 end
 
 function togglefullscreen(fullscr)
@@ -609,16 +500,11 @@ function togglefullscreen(fullscr)
 	if fullscr == false then
 		scale = suggestedscale
 		physicsscale = scale/4
-		love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
 	else
-		love.graphics.setMode( 0, 0, true, vsync, 16 )
-		desktopwidth, desktopheight = love.graphics.getWidth(), love.graphics.getHeight()
-		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
-		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
-		if suggestedscale > 5 then
-			suggestedscale = 5
-		end
-		maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160))
+		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=0} )
+		desktopwidth, desktopheight = love.graphics.getDimensions()
+		computescales()
 		
 		scale = maxscale
 		physicsscale = scale/4
@@ -629,13 +515,14 @@ function togglefullscreen(fullscr)
 end
 
 function loadhighscores()
+	local fileloc, highdata
 	if gameno == 1 then
 		fileloc = "highscoresA.txt"
 	else
 		fileloc = "highscoresB.txt"
 	end
 	
-	if love.filesystem.exists( fileloc ) then
+	if love.filesystem.getInfo( fileloc ) then
 		
 		highdata = love.filesystem.read( fileloc )
 		highdata = highdata:split(";")
@@ -671,6 +558,7 @@ function newhighscores()
 end
 
 function savehighscores()
+	local fileloc, highdata
 	if gameno == 1 then
 		fileloc = "highscoresA.txt"
 	else
@@ -685,22 +573,12 @@ function savehighscores()
 end
 
 function changescale(i)
-	love.graphics.setMode( 160*i, 144*i, false, vsync, 0 )
+	love.window.setMode( 160*i, 144*i, {vsync=vsync, msaa=0} )
 	nextpieceimg = {}
 	for j = 1, 7 do
-		nextpieceimg[j] = newPaddedImage( "graphics/pieces/"..j..".png", i )
+		nextpieceimg[j] = newTintedImage( "graphics/pieces/"..j..".png", i )
 	end
 	physicsscale = i/4
-end
-
-function isElement(t, value)
-	for i, v in pairs(t) do
-		if v == value then
-			return true
-		end
-	end
-	
-	return false
 end
 
 function string:split(delimiter)
@@ -716,45 +594,16 @@ function string:split(delimiter)
 	return result
 end
 
-function pythagoras(a, b)
-	c = math.sqrt(a^2 + b^2)
-	if a < 0 or b < 0 then
-		c = -c
-	end
-	return c
-end
-
 function round(num, idp)
   local mult = 10^(idp or 0)
   return math.floor(num * mult + 0.5) / mult
 end
 
-function table2string(mytable)
-	output = {}
-	for i, v in pairs (mytable) do
-		output[i] = mytable[i]
+function getPoints2table(shape, body) --returns the shape's points; in world coordinates if the body it's attached to is given
+	if body then
+		return {body:getWorldPoints(shape:getPoints())}
 	end
-	return output
-end
-
-function getPoints2table(shape)
-	x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8 = shape:getPoints()
-	if x4 == nil then
-		return {x1,y1,x2,y2,x3,y3}
-	end
-	if x5 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4}
-	end
-	if x6 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5}
-	end
-	if x7 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6}
-	end
-	if x8 == nil then
-		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7}
-	end
-	return     {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8}
+	return {shape:getPoints()}
 end
 
 function getrainbowcolor(i)
@@ -788,408 +637,78 @@ function getrainbowcolor(i)
 	return {r, g, b}
 end
 
-function love.keypressed( key, unicode )
-	if gamestate == nil then
-		if controls.check("return", key) then
-			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
-			love.audio.play(musictitle)
+
+function gamemenu_navigate(key) --moves the cursor on the game type/music grid shared by both game menus
+	if controls.check("left", key) then
+		if selection == 2 or selection == 4 or selection == 6 then
+			selection = selection - 1
+			selectblink = true
 			oldtime = love.timer.getTime()
 		end
-		
-	elseif gamestate == "logo" then
-		if controls.check("return", key) then
-			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
-			love.audio.play(musictitle)
+	elseif controls.check("right", key) then
+		if selection == 1 or selection == 3 or selection == 5 then
+			selection = selection + 1
+			selectblink = true
 			oldtime = love.timer.getTime()
 		end
-		
-	elseif gamestate == "credits" then
-		if controls.check("return", key) then
-			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
-			love.audio.play(musictitle)
+	elseif controls.check("up", key) then
+		if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
+			selection = selection - 2
+			selectblink = true
 			oldtime = love.timer.getTime()
-		end
-		
-	elseif gamestate == "title" then
-		if controls.check("return", key) then
-			if playerselection ~= 3 then
-				if soundenabled then
-					love.audio.stop(musictitle)
-					if musicno < 4 then
-						love.audio.play(music[musicno])
-					end
-				end
-			end
-			if playerselection == 1 then
-				gamestate = "menu"
-			elseif playerselection == 2 then
-				gamestate = "multimenu"
-			else
-				gamestate = "options"
-				if soundenabled then
-				love.audio.stop(musictitle)
-				love.audio.play(musicoptions)
-				end
-				optionsselection = 1
-			end
-		elseif controls.check("escape", key) then
-			love.event.push("q")
-		elseif controls.check("left", key) and playerselection > 1 then
-			playerselection = playerselection - 1
-		elseif controls.check("right", key) and playerselection < 3 then
-			playerselection = playerselection + 1
-		end
-		
-	elseif gamestate == "menu" then	
-		oldmusicno = musicno
-		if controls.check("escape", key) then
-			if musicno < 4 then
-				love.audio.stop(music[musicno])
-			end
-			gamestate = "title"
-			if soundenabled then
-			love.audio.stop(musictitle)
-			love.audio.play(musictitle)
-			end
-		elseif key == "backspace" then
-			newhighscores()
-		elseif controls.check("return", key) then
-			if gameno == 1 then
-				gameA_load()
-			else
-				gameB_load()
-			end
-		elseif controls.check("left", key) then
-			if selection == 2 or selection == 4 or selection == 6 then
-				selection = selection - 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("right", key) then
-			if selection == 1 or selection == 3 or selection == 5 then
-				selection = selection + 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("up", key) then
-			if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
-				selection = selection - 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection < 3 then
-					selection = gameno
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 1 or selection == 2 then
-				selection = musicno + 2
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("down", key) then
-			if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
-				selection = selection + 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection > 2 and selection < 5 then
-					selection = musicno + 2
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 5 or selection == 6 then
+			if selection < 3 then
 				selection = gameno
 				selectblink = false
 				oldtime = love.timer.getTime()
 			end
+		elseif selection == 1 or selection == 2 then
+			selection = musicno + 2
+			selectblink = false
+			oldtime = love.timer.getTime()
 		end
-		if selection > 2 and not controls.check("escape", key) then
-			musicno = selection - 2
-			if oldmusicno ~= musicno and oldmusicno ~= 4 then
-				love.audio.stop(music[oldmusicno])
-			end
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		elseif not controls.check("escape", key) then
-			gameno = selection
-			loadhighscores()
-		end
-	
-	elseif gamestate == "options" then
-		if controls.check("escape", key) then
-			if soundenabled then
-				love.audio.stop(musicoptions)
-				love.audio.stop(musictitle)
-				love.audio.play(musictitle)
-			end
-			saveoptions()
-			loadimages()
-			gamestate = "title"
-		elseif controls.check("down", key) then
-			optionsselection = optionsselection + 1
-			if optionsselection > #optionschoices then
-				optionsselection = 1
-			end
+	elseif controls.check("down", key) then
+		if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
+			selection = selection + 2
 			selectblink = true
 			oldtime = love.timer.getTime()
-			
-		elseif controls.check("up", key) then
-			optionsselection = optionsselection - 1
-			if optionsselection == 0 then
-				optionsselection = #optionschoices
-			end
-			selectblink = true
-			oldtime = love.timer.getTime()
-			
-		elseif controls.check("left", key) then
-			if optionsselection == 1 then
-				if volume >= 0.1 then
-					volume = volume - 0.1
-					if volume < 0.1 then
-						volume = 0
-					end
-					changevolume(volume)
-				end
-				
-			elseif optionsselection == 3 then
-				if fullscreen == false then
-					if scale > 1 then
-						scale = scale - 1
-						changescale(scale)
-					end
-				end
-				
-			elseif optionsselection == 4 then
-				if fullscreen == false then
-					togglefullscreen(true)
-				end
-			
-			end
-			
-		elseif controls.check("right", key) then
-			if optionsselection == 1 then
-				if volume <= 0.9 then
-					volume = volume + 0.1
-					changevolume(volume)
-				end
-				
-			elseif optionsselection == 3 then
-				if fullscreen == false then
-					if scale < maxscale then
-						scale = scale + 1
-						changescale(scale)
-					end
-				end
-				
-			elseif optionsselection == 4 then
-				if fullscreen == true then
-					togglefullscreen(false)
-				end
-				
-			end
-			
-		elseif controls.check("return", key) then
-			if optionsselection == 1 then
-				volume = 1
-				changevolume(volume)
-			elseif optionsselection == 2 then
-				hue = 0.08
-				optionsmenu = newPaddedImage("graphics/options.png");optionsmenu:setFilter( "nearest", "nearest" )
-				volumeslider = newPaddedImage("graphics/volumeslider.png");volumeslider:setFilter( "nearest", "nearest" )
-			elseif optionsselection == 3 then
-				if fullscreen == false then
-					if scale ~= suggestedscale then
-						scale = suggestedscale
-						changescale(scale)
-					end
-				end
-			elseif optionsselection == 4 then
-				if fullscreen == true then
-					togglefullscreen(false)
-				end
-			end
-			
-		end
-	
-	elseif gamestate == "multimenu" then	
-		oldmusicno = musicno
-		if controls.check("escape", key) then
-			if musicno < 4 then
-				love.audio.stop(music[musicno])
-			end
-			gamestate = "title"
-			love.audio.stop(musictitle)
-			love.audio.play(musictitle)
-		elseif controls.check("return", key) then
-			gameBmulti_load()
-		elseif controls.check("left", key) then
-			if selection == 2 or selection == 4 or selection == 6 then
-				selection = selection - 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("right", key) then
-			if selection == 1 or selection == 3 or selection == 5 then
-				selection = selection + 1
-				selectblink = true
-				oldtime = love.timer.getTime()
-			end
-		elseif controls.check("up", key) then
-			if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
-				selection = selection - 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection < 3 then
-					selection = gameno
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 1 or selection == 2 then
+			if selection > 2 and selection < 5 then
 				selection = musicno + 2
 				selectblink = false
 				oldtime = love.timer.getTime()
 			end
-		elseif controls.check("down", key) then
-			if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
-				selection = selection + 2
-				selectblink = true
-				oldtime = love.timer.getTime()
-				if selection > 2 and selection < 5 then
-					selection = musicno + 2
-					selectblink = false
-					oldtime = love.timer.getTime()
-				end
-			elseif selection == 5 or selection == 6 then
-				selection = gameno
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
+		elseif selection == 5 or selection == 6 then
+			selection = gameno
+			selectblink = false
+			oldtime = love.timer.getTime()
 		end
-		if selection > 2 and not controls.check("return", key) and not controls.check("escape", key) then
-			musicno = selection - 2
-			if oldmusicno ~= musicno and oldmusicno ~= 4 then
-				love.audio.stop(music[oldmusicno])
-			end
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		elseif not controls.check("return", key) and not controls.check("escape", key) then
-			gameno = selection
-			loadhighscores()
-		end
-			
-	elseif gamestate == "gameA" or gamestate == "gameB" or gamestate == "failingA" or gamestate == "failingB" then
+	end
+end
 
-		if controls.check("return", key) then
-			pause = not pause
+function gamemenu_select(oldmusicno) --applies the game type or music under the cursor
+	if selection > 2 then
+		musicno = selection - 2
+		if oldmusicno ~= musicno and oldmusicno ~= 4 then
+			love.audio.stop(music[oldmusicno])
+		end
+		if musicno < 4 then
+			love.audio.play(music[musicno])
+		end
+	else
+		gameno = selection
+		loadhighscores()
+	end
+end
 
-			if pause == true then
-				if musicno < 4 then
-					love.audio.pause(music[musicno])
-				end
-				love.audio.stop(pausesound)
-				love.audio.play(pausesound)
-			else
-				if musicno < 4 then
-					love.audio.resume(music[musicno])
-				end
-			end
-		end
-		if gamestate == "gameA" or gamestate == "gameB" then
-			if controls.check("escape", key) then
-				oldtime = love.timer.getTime()
-				gamestate = "menu"
-			end
-			
-			if pause == false and (cuttingtimer == lineclearduration or gamestate == "gameB") then
-				--if key == "up" then --STOP ROTATION OF BLOCK (makes it too easy..)
-				--	tetribodies[counter]:setAngularVelocity(0)
-				--end
-				if controls.check("left", key) or controls.check("right", key) then
-					love.audio.stop(blockmove)
-					love.audio.play(blockmove)
-				elseif controls.check("rotateleft", key) or controls.check("rotateright", key) then
-					love.audio.stop(blockturn)
-					love.audio.play(blockturn)
-				end
-			end
-		end
-	elseif gamestate == "gameBmulti" and gamestarted == false then
-		if controls.check("escape", key) then
-			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
-			end
-			gamestate = "multimenu"
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		end
-	elseif gamestate == "gameBmulti" and gamestarted == true then
-		if controls.check("escape", key) then
-			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
-			end
-			gamestate = "multimenu"
-		end
-		if controls.check("left", key) or controls.check("right", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
-			love.audio.stop(blockmove)
-			love.audio.play(blockmove)
-		elseif controls.check("rotateleft", key) or controls.check("rotateright", key) or controls.check("rotaterightp2", key) or controls.check("rotateleftp2", key) then
-			love.audio.stop(blockturn)
-			love.audio.play(blockturn)
-		end
-		
-	elseif gamestate == "gameBmulti_results" then
-		if controls.check("return", key) or controls.check("escape", key) then
-			if musicno < 4 then
-				love.audio.stop(musicresults)
-				love.audio.play(music[musicno])
-			end
-			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
-			end
-			gamestate = "multimenu"
-		end
-		
-	elseif gamestate == "failed" then
-		if controls.check("return", key) or controls.check("escape", key) then 
-			love.audio.stop(gameover2)
-			rocket_load()
-		end
-	elseif gamestate == "highscoreentry" then
-		if controls.check("return", key) then
-			gamestate = "menu"
-			savehighscores()
-			if musicchanged == true then
-				love.audio.stop(musichighscore)
-			else
-				love.audio.stop(highscoreintro)
-			end
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-		elseif key == "backspace" then
-			if highscorename[highscoreno]:len() > 0 then
-				cursorblink = true
-				highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
-			end
-			
-		elseif whitelist[unicode] == true then
-			if highscorename[highscoreno]:len() < 6 then
-				cursorblink = true
-				highscorename[highscoreno] = highscorename[highscoreno] .. string.char(unicode)
-				love.audio.stop(highscorebeep)
-				love.audio.play(highscorebeep)
-			end
-		end
-	elseif string.sub(gamestate, 1, 6) == "rocket" then
-		if controls.check("return", key) then
-			love.audio.stop(musicrocket1to3)
-			love.audio.stop(musicrocket4)
-			failed_checkhighscores()
-		end
+function love.keypressed( key, scancode, isrepeat )
+	local screen = screens[gamestate]
+	if screen and screen.keypressed then
+		screen.keypressed(key)
+	end
+end
+
+function love.textinput(text)
+	local screen = screens[gamestate]
+	if screen and screen.textinput then
+		screen.textinput(text)
 	end
 end

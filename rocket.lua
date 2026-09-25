@@ -1,5 +1,5 @@
 function rocket_load()
-	rocketscores = {}
+	local rocketscores = {}
 	if gameno == 1 then
 		rocketscores[1] = 3000
 		rocketscores[2] = 7000
@@ -164,3 +164,15 @@ function rocket_draw()
 		love.graphics.setScissor()
 	end
 end
+
+function rocket_keypressed(key)
+	if string.sub(gamestate, 1, 6) == "rocket" then
+	if controls.check("return", key) then
+		love.audio.stop(musicrocket1to3)
+		love.audio.stop(musicrocket4)
+		failed_checkhighscores()
+	end
+	end
+end
+
+registerscreen({"rocket1", "rocket2", "rocket3", "rocket4"}, {update = rocket_update, draw = rocket_draw, keypressed = rocket_keypressed})
