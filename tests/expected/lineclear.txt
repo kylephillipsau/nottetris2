@@ -1,6 +1,6 @@
-21d986c8c5599861ed9ad2030e1ad1b0  lc015_scoreadd.png
-2c665d77685ce18f7dd5195dc69d47b7  lc01_during.png
-91aac430a22b7a21a9aab321699b14d2  lc02_after.png
+d48e4f18837b57ebbbfe4e417adaefab  lc015_scoreadd.png
+07666bd3cfe4ec9f4938d46366be1626  lc01_during.png
+8431fecfcfd4424a270f6746f6ee9b48  lc02_after.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
-62f9790f82e9e450a1112027f7225f71  lc_after.txt
+856a13fabf7117919b557eda2fbf39d0  lc_after.txt
 80c293503c1d6f537142fe54cbbafe75  options.txt

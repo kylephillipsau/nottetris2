@@ -397,7 +397,7 @@ function addgroupfixtures(piece, index, shapes, shapegroups, group) --attaches c
 	for b, shape in pairs(shapes) do
 		if shapegroups[b] == group then
 			local newshape = love.physics.newPolygonShape(shape:getPoints())
-			local fixture = love.physics.newFixture(piece.body, newshape, 1)
+			local fixture = newfixture(piece.body, newshape, 1)
 			fixture:setUserData({index}) --set the fixture name for collision
 			piece.shapes[#piece.shapes+1] = newshape
 			piece.fixtures[#piece.fixtures+1] = fixture

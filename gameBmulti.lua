@@ -254,13 +254,13 @@ function startresults() --floor for the characters, and the winner's physics bod
 
 	local resultsfloorbody = love.physics.newBody(world, 32, -64, "static")
 	local resultsfloorshape = love.physics.newPolygonShape(196,448, 196,480, 836,480, 836,448)
-	local resultsfloorfixture = love.physics.newFixture(resultsfloorbody, resultsfloorshape)
+	local resultsfloorfixture = newfixture(resultsfloorbody, resultsfloorshape)
 	resultsfloorfixture:setUserData("resultsfloor")
 
 	if winner ~= 3 then
 		local won = versuscharacter(winner)
 		winnerbody = love.physics.newBody(world, won.x, 320, "dynamic")
-		local fixture = love.physics.newFixture(winnerbody, love.physics.newRectangleShape(64, won.height), 1)
+		local fixture = newfixture(winnerbody, love.physics.newRectangleShape(64, won.height), 1)
 		fixture:setMask(won.mask)
 		fixture:setUserData(won.name)
 		winnerbody:setLinearDamping(0.5)
@@ -294,11 +294,11 @@ function updateresults() --the winner jumps every 2 seconds and can be pushed ar
 		local won = versuscharacter(winner)
 		if controls.isDown(won.left) then
 			local x, y = winnerbody:getWorldCenter()
-			winnerbody:applyForce( -30, 0, x, y-8 )
+			winnerbody:applyForce( -30*FORCESCALE, 0, x, y-8 )
 		end
 		if controls.isDown(won.right) then
 			local x, y = winnerbody:getWorldCenter()
-			winnerbody:applyForce( 30, 0, x, y-8 )
+			winnerbody:applyForce( 30*FORCESCALE, 0, x, y-8 )
 		end
 	end
 end

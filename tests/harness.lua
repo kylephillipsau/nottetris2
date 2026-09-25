@@ -14,6 +14,7 @@ local t = 0 --seconds since the last scenario step
 local step = 1
 local frames = 0
 local held = {}
+local hook = nil --function(log, held) run every frame, set by a {hook=...} step
 
 local function log(...)
 	local args = {...}
@@ -91,6 +92,8 @@ love.update = function(dt)
 			end
 			love.filesystem.write(s.dump .. ".txt", table.concat(lines, "\n") .. "\n")
 			log("dump", s.dump, #lines, "lines")
+		elseif s.hook ~= nil then --false clears it
+			hook = s.hook or nil
 		elseif s.call then
 			s.call(log)
 		elseif s.quit then
@@ -100,5 +103,8 @@ love.update = function(dt)
 		step = step + 1
 	end
 
+	if hook then
+		hook(log, held)
+	end
 	gameupdate(FRAME)
 end
