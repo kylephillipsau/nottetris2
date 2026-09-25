@@ -1,11 +1,11 @@
-72be93a0811c9389ec84f8263c18ebe0  01_title.png
+c8b70b25e6374d8e66ac1639019011ee  01_title.png
 dca00fc6a4d6c1304232fcdb9aa6ea09  02_menu.png
 26f849049d306bab0d03809880cc5800  03_gameA_start.png
 cf160965e02024005933a4405fdcd489  04_paused.png
-53d6b0972fe680b990288670300997ab  05_gameA_mid.png
-6f06e29e2267fd2fb3855c97071913c5  06_failed.png
-6897056bf575d918c89963ede4dfb0bb  07_after_failed.png
-8ae45af68ef1c47fb840863db4d91c3c  08_later.png
+f9b749b2bdab73eebdbde2abd99429bc  05_gameA_mid.png
+3e4f0c602fc8256474eadb5fc18d8fcb  06_failed.png
+fa0b8ad752deacc3ea3de070818e0a8a  07_after_failed.png
+c37cdcf97a45538e618008ab8fc94b70  08_later.png
 920a9f65322fc5090507d8d7f5169509  09_hs.png
 a06a228f7043336d7e0f55dc627ec9bb  10_end.png
 9f5962e88544a9c48614a2f8a8cf6c3c  d05_gameA_mid.txt

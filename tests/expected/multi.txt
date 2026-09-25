@@ -1,8 +1,8 @@
 72f8c135e365fbd0e50075acfe578e6c  m01_menu.png
 1a51e6fd30b15b742c166d894f459755  m02_countdown.png
 7ddc3972a8d778d13af6e662931395a0  m03_started.png
-bb8ca2070536d19d3c0326452caaba0a  m04_mid.png
-052dc1a46cf8f39cff2c818f659d92cb  m05_results.png
+bade4b7709e350a44f07a438485c925e  m04_mid.png
+b4975267e8b23a53e5eaaead55deebcc  m05_results.png
 9a6314b41c2cec7b09a15aabb0e42907  m06_back.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 80c293503c1d6f537142fe54cbbafe75  options.txt

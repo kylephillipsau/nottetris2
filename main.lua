@@ -300,7 +300,9 @@ function newTintedImage(filename, s) --loads an image tinted with the current hu
 end
 
 function newTintedImageFont(filename, glyphs)
-	return love.graphics.newImageFont(newImageData(filename), glyphs)
+	--LÖVE 0.7 advanced each glyph by its width plus the separator gap after it in the image (always 1px in
+	--these fonts); LÖVE 11 leaves the gap out unless given as extra spacing, which made text 1px per letter too narrow
+	return love.graphics.newImageFont(newImageData(filename), glyphs, 1)
 end
 
 function loadoptionsimages() --the options screen previews the hue, so reload its images when it changes

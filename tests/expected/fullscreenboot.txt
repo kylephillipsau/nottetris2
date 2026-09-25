@@ -1,6 +1,6 @@
 a3bde528d429396e0e1644b912150244  f01_title.png
 9ca1f518b7c58f82f0daf5355962fb53  f02_gameA.png
-084525bc4e623cc758160623c89086b7  f03_versus.png
-64401c1fbd51d8e6b88e9a2715f16ea1  f04_windowed.png
+0c6aba31208cf7d06956efc93de0581d  f03_versus.png
+3e5d541c7b9b6dbe4c07472010b1330d  f04_windowed.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 d441ebb6a3c9878ec6b3561873e1994c  options.txt
