@@ -649,11 +649,6 @@ function clearfulllines() --scores and removes every line that is full enough. r
 	
 	scorelines(numberoflines)
 	
-	--Draw the screen before removing lines.
-	love.graphics.clear()
-	drawscreen()
-	love.graphics.present( )
-	
 	for i = 1, 18 do
 		if linesremoved[i] then
 			removeline(i)
