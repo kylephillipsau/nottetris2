@@ -198,7 +198,7 @@ function loadimages()
 	end
 	
 	--font--
-	tetrisfont = newTintedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
+	local tetrisfont = newTintedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
 	whitefont = newTintedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
 	love.graphics.setFont(tetrisfont)
 end

@@ -23,8 +23,7 @@ function rocket_load()
 			end
 			rockettimer = love.timer.getTime()
 			gamestate = "rocket"..tostring(i)
-			currenttime = love.timer.getTime()
-			timelapsed = currenttime - rockettimer
+			timelapsed = 0
 			break
 		end
 	end
@@ -36,7 +35,9 @@ function rocket_load()
 end
 
 function rocket_update()
-	--check for sequence over
+	timelapsed = love.timer.getTime() - rockettimer
+	
+	--sequence over?
 	if gamestate == "rocket4" then
 		if timelapsed > 41.1 then
 			failed_checkhighscores()
@@ -48,116 +49,98 @@ function rocket_update()
 	end
 end
 
+function flicker(rate) --alternates between true and false rate times per second
+	return math.floor(timelapsed*rate) % 2 == 0
+end
+
 function rocket_draw()
-	
-	currenttime = love.timer.getTime()
-	timelapsed = currenttime - rockettimer
-	
-	--background
 	love.graphics.draw( rocketbackground, 0, 0, 0, scale, scale)
 	if gamestate == "rocket4" then
-		love.graphics.draw( bigrockettakeoffbackground, 54*scale, 60*scale, 0, scale, scale)
-	end
-	
-	--rocket position
-	if gamestate == "rocket4" then
-		rocketpos = 112 - 112*((timelapsed-12)/18)
+		drawshuttle()
 	else
-		rocketpos = 112 - 112*((timelapsed-8)/18)
+		drawsmallrocket(tonumber(string.sub(gamestate, 7)))
 	end
+end
+
+function drawshuttle() --the space shuttle for the best scores: lifts off at 12 seconds, then congratulations
+	love.graphics.draw( bigrockettakeoffbackground, 54*scale, 60*scale, 0, scale, scale)
+	local rocketpos = 112 - 112*((timelapsed-12)/18) --18 seconds for 112 pixels
 	
-	--fire
-	if gamestate == "rocket4" then
-		if timelapsed > 13 then
-			if math.mod( math.floor(timelapsed*8), 2) == 0 then
-				love.graphics.draw( firebig1, 68*scale, round(rocketpos*scale), 0, scale, scale)
-			else
-				love.graphics.draw( firebig2, 68*scale, round(rocketpos*scale), 0, scale, scale)
-			end
-		end
-	else
-		if timelapsed > 8.5 then
-			if math.mod( math.floor(timelapsed*8), 2) == 0 then
-				love.graphics.draw( fire1, 77*scale, round(rocketpos*scale), 0, scale, scale)
-			else
-				love.graphics.draw( fire2, 76*scale, round(rocketpos*scale), 0, scale, scale)
-			end
-		end
-	end
-	
-	--rocket
-	if gamestate == "rocket4" then
-		if timelapsed < 12 then
-			love.graphics.draw( bigrocketbackground, 64*scale, 48*scale, 0, scale, scale)
+	if timelapsed > 13 then
+		if flicker(8) then
+			love.graphics.draw( firebig1, 68*scale, round(rocketpos*scale), 0, scale, scale)
 		else
-			love.graphics.draw( spaceshuttle, 64*scale, round(rocketpos*scale), 0, scale, scale, 0, 64)--18 seconds for 112 pixels
-		end
-	else
-		if timelapsed < 8 then
-			if gamestate == "rocket1" then
-				love.graphics.draw( rocket1, 75*scale, 84*scale, 0, scale, scale)
-			elseif gamestate == "rocket2" then
-				love.graphics.draw( rocket2, 76*scale, 74*scale, 0, scale, scale)
-			elseif gamestate == "rocket3" then
-				love.graphics.draw( rocket3, 72*scale, 56*scale, 0, scale, scale)
-			end
-		else
-			if gamestate == "rocket1" then
-				love.graphics.draw( rocket1, 75*scale, round(rocketpos*scale), 0, scale, scale, 0, 28)
-			elseif gamestate == "rocket2" then
-				love.graphics.draw( rocket2, 76*scale, round(rocketpos*scale), 0, scale, scale, 0, 38)
-			elseif gamestate == "rocket3" then
-				love.graphics.draw( rocket3, 72*scale, round(rocketpos*scale), 0, scale, scale, 0, 56)
-			end
+			love.graphics.draw( firebig2, 68*scale, round(rocketpos*scale), 0, scale, scale)
 		end
 	end
 	
-	--smoke
-	if gamestate == "rocket4" then
+	if timelapsed < 12 then
+		love.graphics.draw( bigrocketbackground, 64*scale, 48*scale, 0, scale, scale)
+	else
+		love.graphics.draw( spaceshuttle, 64*scale, round(rocketpos*scale), 0, scale, scale, 0, 64)
+	end
+	
+	if flicker(6) then
 		if timelapsed > 3 and timelapsed < 8 then
-			if math.mod( math.floor(timelapsed*6), 2) == 0 then
-				love.graphics.draw( smoke1left, 50*scale, 106*scale, 0, scale, scale)
-				love.graphics.draw( smoke1right, 92*scale, 106*scale, 0, scale, scale)
-			end
+			love.graphics.draw( smoke1left, 50*scale, 106*scale, 0, scale, scale)
+			love.graphics.draw( smoke1right, 92*scale, 106*scale, 0, scale, scale)
 		elseif timelapsed > 8 and timelapsed < 13 then
-			if math.mod( math.floor(timelapsed*6), 2) == 0 then
-				love.graphics.draw( smoke2left, 44*scale, 98*scale, 0, scale, scale)
-				love.graphics.draw( smoke2right, 92*scale, 98*scale, 0, scale, scale)
-			end
+			love.graphics.draw( smoke2left, 44*scale, 98*scale, 0, scale, scale)
+			love.graphics.draw( smoke2right, 92*scale, 98*scale, 0, scale, scale)
 		end
+	end
+	
+	--"congratulations!" appears letter by letter
+	local symbolsnumber = 0
+	for i = 16, 1, -1 do
+		if timelapsed > 35.2 + 1.6*(i/16) then
+			symbolsnumber = i
+			break
+		end
+	end
+	love.graphics.print(string.sub("congratulations!", 1, symbolsnumber), 16*scale, 32*scale, 0, scale)
+	for i = 1, symbolsnumber do
+		love.graphics.draw( congratsline, (9+(8*i-1))*scale, 40*scale, 0, scale, scale)
+	end
+end
+
+--x, y on the launch pad and height of each small rocket
+smallrockets = {
+	{75, 84, 28},
+	{76, 74, 38},
+	{72, 56, 56},
+}
+
+function drawsmallrocket(n) --rockets 1 to 3 lift off at 8 seconds
+	local image = ({rocket1, rocket2, rocket3})[n]
+	local x, y, height = unpack(smallrockets[n])
+	local rocketpos = 112 - 112*((timelapsed-8)/18)
+	
+	if timelapsed > 8.5 then
+		if flicker(8) then
+			love.graphics.draw( fire1, 77*scale, round(rocketpos*scale), 0, scale, scale)
+		else
+			love.graphics.draw( fire2, 76*scale, round(rocketpos*scale), 0, scale, scale)
+		end
+	end
+	
+	if timelapsed < 8 then
+		love.graphics.draw( image, x*scale, y*scale, 0, scale, scale)
 	else
-		if timelapsed > 3 and timelapsed < 8.5 then
-			if math.mod( math.floor(timelapsed*6), 2) == 0 then
-				love.graphics.draw( smoke1left, 56*scale, 106*scale, 0, scale, scale)
-				love.graphics.draw( smoke1right, 86*scale, 106*scale, 0, scale, scale)
-			end
-		end
+		love.graphics.draw( image, x*scale, round(rocketpos*scale), 0, scale, scale, 0, height)
 	end
 	
-	--text
-	if gamestate == "rocket4" then
-		symbolsnumber = 0
-		for i = 16, 1, -1 do
-			if timelapsed > 35.2 + 1.6*(i/16) then
-				symbolsnumber = i
-				break
-			end
-		end
-		love.graphics.print(string.sub("congratulations!", 1, symbolsnumber), 16*scale, 32*scale, 0, scale)
-		for i = 1, symbolsnumber do
-			love.graphics.draw( congratsline, (9+(8*i-1))*scale, 40*scale, 0, scale, scale)
-		end
+	if timelapsed > 3 and timelapsed < 8.5 and flicker(6) then
+		love.graphics.draw( smoke1left, 56*scale, 106*scale, 0, scale, scale)
+		love.graphics.draw( smoke1right, 86*scale, 106*scale, 0, scale, scale)
 	end
-	
 end
 
 function rocket_keypressed(key)
-	if string.sub(gamestate, 1, 6) == "rocket" then
 	if controls.check("return", key) then
 		love.audio.stop(sfx.musicrocket1to3)
 		love.audio.stop(sfx.musicrocket4)
 		failed_checkhighscores()
-	end
 	end
 end
 

@@ -70,7 +70,7 @@ love.update = function(dt)
 			held[s.hold] = true
 		elseif s.release then
 			held[s.release] = nil
-		elseif s.shot then
+		elseif s.shot then --captured after this frame is drawn, i.e. after any later steps that run in the same update
 			local name = s.shot
 			love.graphics.captureScreenshot(function(img)
 				img:encode("png", name .. ".png")
