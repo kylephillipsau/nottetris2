@@ -25,10 +25,6 @@ end
 
 function menu_draw()
 	local offsetX
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
-	end
 
 	if gamestate == "logo" then		
 		if logotime <= logoduration then

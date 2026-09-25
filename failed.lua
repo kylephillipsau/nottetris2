@@ -5,13 +5,6 @@ function failed_load()
 end
 
 function failed_draw()
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor(fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale)
-	end
 	
 	if gameno == 1 then
 		love.graphics.draw(gamebackgroundcutoff, 0, 0, 0, scale)
@@ -26,13 +19,6 @@ function failed_draw()
 	-----------------------------------------------
 	
 	
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(-fullscreenoffsetX, -fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor()
-	end
 end
 
 function failed_checkhighscores()

@@ -54,13 +54,6 @@ function createtetriB(i, uniqueid, x, y)
 end
 
 function gameB_draw()
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor(fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale)
-	end
 	
 	--background--
 	love.graphics.draw(gamebackground, 0, 0, 0, scale)
@@ -89,13 +82,6 @@ function gameB_draw()
 
 	love.graphics.setColor(1, 1, 1)
 	
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(-fullscreenoffsetX, -fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor()
-	end
 	
 end
 	

@@ -86,11 +86,6 @@ function gameBmulti_load()
 end
 
 function gameBmulti_draw()
-	if fullscreen then
-		love.graphics.translate(mpfullscreenoffsetX, mpfullscreenoffsetY)
-		
-		love.graphics.setScissor(mpfullscreenoffsetX, mpfullscreenoffsetY, 274*mpscale, 144*mpscale)
-	end
 
 	--background--
 	if gamestate ~= "gameBmulti_results" then
@@ -217,11 +212,6 @@ function gameBmulti_draw()
 		end
 	end
 	
-	if fullscreen then
-		love.graphics.translate(-mpfullscreenoffsetX, -mpfullscreenoffsetY)
-		
-		love.graphics.setScissor()
-	end
 end
 	
 function gameBmulti_update(dt)
@@ -595,4 +585,5 @@ function gameBmulti_keypressed(key)
 end
 
 registerscreen({"gameBmulti", "failingBmulti", "failedBmulti", "gameBmulti_results"},
-	{update = gameBmulti_update, draw = gameBmulti_draw, keypressed = gameBmulti_keypressed})
+	{update = gameBmulti_update, draw = gameBmulti_draw, keypressed = gameBmulti_keypressed,
+	viewport = function() return mpfullscreenoffsetX, mpfullscreenoffsetY, 274*mpscale, 144*mpscale end})

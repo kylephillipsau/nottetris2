@@ -1,4 +1,4 @@
-screens = {} --gamestate -> {update, draw, keypressed, textinput}
+screens = {} --gamestate -> {update, draw, keypressed, textinput, viewport}
 
 function registerscreen(states, screen) --each screen file registers the gamestates it handles
 	for i, state in ipairs(states) do
@@ -228,10 +228,26 @@ function love.update(dt)
 end
 
 function love.draw()
+	drawscreen()
+end
+
+function drawscreen() --draws the current screen, centred and clipped to its playfield in fullscreen
 	local screen = screens[gamestate]
-	if screen and screen.draw then
-		screen.draw()
+	if not (screen and screen.draw) then
+		return
 	end
+	love.graphics.push("all")
+	if fullscreen then
+		local x, y, w, h = (screen.viewport or singleplayerviewport)()
+		love.graphics.translate(x, y)
+		love.graphics.setScissor(x, y, w, h)
+	end
+	screen.draw()
+	love.graphics.pop()
+end
+
+function singleplayerviewport() --screen area of the 160x144 playfield: x, y, width, height
+	return fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale
 end
 
 function printrightaligned(value, x, y, s) --prints value so that its last character starts at x, y (unscaled pixels; s defaults to scale)

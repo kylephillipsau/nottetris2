@@ -30,6 +30,7 @@ return {
 	{hold="down"}, {wait=0.02},
 	{call=function(log) log("waiting for clear") end},
 	{wait=1.5}, {release="down"}, {shot="lc01_during"}, {call=function(log) log("cuttingtimer", cuttingtimer) end},
-	{wait=3}, {call=function(log) dump(log, "after") end}, {shot="lc02_after"},
+	{wait=0.35}, {shot="lc015_scoreadd"}, {call=function(log) log("scoreaddtimer", scoreaddtimer) end},
+	{wait=2.65}, {call=function(log) dump(log, "after") end}, {shot="lc02_after"},
 	{quit=true},
 }

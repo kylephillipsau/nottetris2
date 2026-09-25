@@ -64,13 +64,6 @@ function createtetriA(i, uniqueid, x, y) --creates block, including body, shapes
 end
 
 function gameA_draw()
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor(fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale)
-	end
 	
 	--background--
 	love.graphics.draw(gamebackgroundcutoff, 0, 0, 0, scale, scale)
@@ -118,28 +111,12 @@ function gameA_draw()
 	----------------
 	--Last score
 	if scoreaddtimer < scoreaddtime then
-		if fullscreen then
-			love.graphics.setScissor(105*scale+fullscreenoffsetX, 35*scale+fullscreenoffsetY, 55*scale, 9*scale)
-		else
-			love.graphics.setScissor(105*scale, 35*scale, 55*scale, 9*scale)
-		end
-		
+		love.graphics.push("all")
+		local x, y = love.graphics.transformPoint(105*scale, 35*scale)
+		love.graphics.intersectScissor(x, y, 55*scale, 9*scale)
 		love.graphics.setFont(whitefont)
-		
-		local offsetX = 0
-		for i = 1, tostring(lastscoreadd):len() - 1 do
-			offsetX = offsetX -	8*scale
-		end
-		
-		love.graphics.print("+" .. lastscoreadd, 136*scale+offsetX, 36*scale-scoreaddtimer/scoreaddtime*8*scale, 0, scale)
-		
-		love.graphics.setFont(tetrisfont)	
-		
-		if fullscreen then
-			love.graphics.setScissor(fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale)
-		else
-			love.graphics.setScissor()
-		end
+		printrightaligned("+" .. lastscoreadd, 144, 36-scoreaddtimer/scoreaddtime*8)
+		love.graphics.pop()
 	end
 	
 	
@@ -175,13 +152,6 @@ function gameA_draw()
 	-----------------------------------------------
 	
 	
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(-fullscreenoffsetX, -fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor()
-	end
 end
 
 function gameA_update(dt)
@@ -872,7 +842,7 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 			
 			--Draw the screen before removing lines.
 			love.graphics.clear()
-			gameA_draw()
+			drawscreen()
 			love.graphics.present( )
 			
 			for i = 1, 18 do
