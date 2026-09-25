@@ -3,3 +3,5 @@ e01f97a49778fab2466e90afefd8cffd  o02_hue.png
 f759c70f6a37d61e72573645e84457ed  o03_scale_down.png
 ed9fb5d0ad6c17fe3728584cff5ee7e5  o04_fullscreen.png
 2a197d107afd8b275319a6f864706439  o05_title_after.png
+e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
+193ace087fe07be9cada687c53638fd7  options.txt

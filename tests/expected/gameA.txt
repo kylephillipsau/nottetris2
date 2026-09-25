@@ -8,3 +8,8 @@ ee9d36a699668a7ba5ac68226f4c9ba6  06_failed.png
 02463ed9935ca942e8aadf3d3326ebac  08_later.png
 397dc805537e58b4557164665513bf0a  09_hs.png
 ecb9dcaec6bedddc22e900ae97ce1cce  10_end.png
+4352a7093b62b6476f1a1a5411a5b6f6  d05_gameA_mid.txt
+02730344f5739c7205e2083ebc72c0bb  d06_gameA_late.txt
+01cc0ae413b85ed5d57bb6236ccac035  d07_gameA_failing.txt
+e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
+80c293503c1d6f537142fe54cbbafe75  options.txt

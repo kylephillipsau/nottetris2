@@ -8,3 +8,5 @@ b2cb850383395c58b2da1272e8f9d295  n04_music_b.png
 7791d08c3aeb57c60d52b15af91e009e  n08_up.png
 6a3eb39be21e67e45b37cb729f24f772  n09_multi_off.png
 118bb095cf91cf65b89190d75c30d59e  n10_multi_invade.png
+e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
+80c293503c1d6f537142fe54cbbafe75  options.txt

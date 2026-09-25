@@ -76,6 +76,21 @@ love.update = function(dt)
 				img:encode("png", name .. ".png")
 				log("shot", name)
 			end)
+		elseif s.dump then --exact physics state of every piece, compared like the screenshots
+			local lines = {"gamestate " .. tostring(gamestate), "score " .. tostring(scorescore) .. " lines " .. tostring(linesscore)}
+			for _, list in ipairs({tetris or {}, multipieces and multipieces[1] or {}, multipieces and multipieces[2] or {}}) do
+				for i = 1, table.maxn(list) do
+					local piece = list[i]
+					if piece then
+						local b = piece.body
+						table.insert(lines, string.format("%d kind %d shapes %d pos %.6f %.6f angle %.6f vel %.6f %.6f",
+							i, piece.kind, #piece.shapes, b:getX(), b:getY(), b:getAngle(), b:getLinearVelocity()))
+					end
+				end
+				table.insert(lines, "--")
+			end
+			love.filesystem.write(s.dump .. ".txt", table.concat(lines, "\n") .. "\n")
+			log("dump", s.dump, #lines, "lines")
 		elseif s.call then
 			s.call(log)
 		elseif s.quit then
