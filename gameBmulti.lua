@@ -86,136 +86,90 @@ function gameBmulti_load()
 end
 
 function gameBmulti_draw()
-
-	--background--
-	if gamestate ~= "gameBmulti_results" then
-		love.graphics.draw(gamebackgroundmulti, 0, 0, 0, mpscale)
-	else
+	if gamestate == "gameBmulti_results" then
 		love.graphics.draw(multiresults, 0, 0, 0, mpscale)
+	else
+		love.graphics.draw(gamebackgroundmulti, 0, 0, 0, mpscale)
 	end
-	---------------
-	if gamestarted == false then
-		if newtime - starttimer > 2 then
-			love.graphics.draw( number1, 73*mpscale, 48*mpscale, 0, mpscale)
-			love.graphics.draw( number1, 153*mpscale, 48*mpscale, 0, mpscale)
-		elseif newtime - starttimer > 1 then
-			love.graphics.draw( number2, 73*mpscale, 48*mpscale, 0, mpscale)
-			love.graphics.draw( number2, 153*mpscale, 48*mpscale, 0, mpscale)
-		elseif newtime - starttimer > 0 then
-			love.graphics.draw( number3, 73*mpscale, 48*mpscale, 0, mpscale)
-			love.graphics.draw( number3, 153*mpscale, 48*mpscale, 0, mpscale)
+	
+	if gamestarted == false then --countdown
+		local numbers = {number3, number2, number1}
+		local second = math.min(math.ceil(newtime - starttimer), 3)
+		if second >= 1 then
+			love.graphics.draw( numbers[second], 73*mpscale, 48*mpscale, 0, mpscale)
+			love.graphics.draw( numbers[second], 153*mpscale, 48*mpscale, 0, mpscale)
 		end
 	end
-	--pieces P1--
-
-	drawmultipieces(1, p1color)
 	
+	drawmultipieces(1, p1color)
 	if p1fail == false and nextpiecep1 then
-		--Next piece
 		love.graphics.draw(nextpieceimgmp[nextpiecep1], 24*mpscale, 120*mpscale, -nextpiecerot, 1, 1, piececenterpreview[nextpiecep1][1]*mpscale, piececenterpreview[nextpiecep1][2]*mpscale)
 	end
 	
-	----------------
-	--pieces P2--
 	drawmultipieces(2, p2color)
-	----------------
 	love.graphics.setColor(1, 1, 1)
-	
 	if p2fail == false and nextpiecep2 then
-		--Next piece
 		love.graphics.draw(nextpieceimgmp[nextpiecep2], 250*mpscale, 120*mpscale, nextpiecerot, 1, 1, piececenterpreview[nextpiecep2][1]*mpscale, piececenterpreview[nextpiecep2][2]*mpscale)
 	end
-	--SCORES P1---------------------------------------
 	
-	--"score"--
+	--scores and tiles
 	printrightaligned(scorescorep1, 36, 24, mpscale)
-	
-	--"tiles"--
 	printrightaligned(linesscorep1, 28, 80, mpscale)
-	-----------------------------------------------
-	
-	--SCORES P2---------------------------------------
-	--"score"--
 	printrightaligned(scorescorep2, 262, 24, mpscale)
-	
-	--"tiles"--
 	printrightaligned(linesscorep2, 254, 80, mpscale)
-	-----------------------------------------------
 	
 	if gamestate == "gameBmulti_results" then
-		--win counter
-		if p1wins < 10 then
-			love.graphics.print( "0"..p1wins, 111*mpscale, 128*mpscale, 0, mpscale)
-		else
-			love.graphics.print( p1wins, 111*mpscale, 128*mpscale, 0, mpscale)
+		drawresults()
+	end
+end
+
+function versuscharacter(player) --mario for player 1, luigi for player 2: results screen sprites, physics and controls
+	if player == 1 then
+		return {name = "mario", x = 388, height = 108, mask = 3, left = "leftp1", right = "rightp1",
+			idle = marioidle, jump = mariojump, cry1 = mariocry1, cry2 = mariocry2, originx = 12, originy = 13.5,
+			cryx = 83, cryy = 66, drawx = 84, drawy = 69}
+	else
+		return {name = "luigi", x = 704, height = 124, mask = 2, left = "leftp2", right = "rightp2",
+			idle = luigiidle, jump = luigijump, cry1 = luigicry1, cry2 = luigicry2, originx = 14, originy = 15.5,
+			cryx = 162, cryy = 66, drawx = 162, drawy = 65}
+	end
+end
+
+function drawresults() --win counters, the winner jumping and the loser crying (or both standing for a draw)
+	love.graphics.print( string.format("%02d", p1wins), 111*mpscale, 128*mpscale, 0, mpscale)
+	love.graphics.print( string.format("%02d", p2wins), 193*mpscale, 128*mpscale, 0, mpscale)
+	
+	if winner == 3 then
+		local mario, luigi = versuscharacter(1), versuscharacter(2)
+		love.graphics.draw( mario.idle, mario.drawx*mpscale, mario.drawy*mpscale, 0, mpscale, mpscale)
+		if cryframe == false then
+			love.graphics.print( "draw", 160*mpscale, 40*mpscale, 0, mpscale)
 		end
-		
-		if p2wins < 10 then
-			love.graphics.print( "0"..p2wins, 193*mpscale, 128*mpscale, 0, mpscale)
-		else
-			love.graphics.print( p2wins, 193*mpscale, 128*mpscale, 0, mpscale)
+		love.graphics.draw( luigi.idle, luigi.drawx*mpscale, luigi.drawy*mpscale, 0, mpscale, mpscale)
+		if cryframe == false then
+			love.graphics.print( "draw", 80*mpscale, 40*mpscale, 0, mpscale)
 		end
-		
-		if winner == 1 then
-			--mario
-			if jumpframe == false then
-				love.graphics.draw( marioidle, mariobody:getX()*physicsmpscale, mariobody:getY()*physicsmpscale, mariobody:getAngle(), mpscale, mpscale, 12, 13.5)
-			else
-				love.graphics.draw( mariojump, mariobody:getX()*physicsmpscale, mariobody:getY()*physicsmpscale, mariobody:getAngle(), mpscale, mpscale, 12, 13.5)
-			end
-			
-			--luigi
-			if cryframe == false then
-				love.graphics.draw( luigicry1, 162*mpscale, 66*mpscale,  0, mpscale, mpscale)
-			else
-				love.graphics.draw( luigicry2, 162*mpscale, 66*mpscale,  0, mpscale, mpscale)
-				love.graphics.print( "mario", 93*mpscale, 20*mpscale, 0, mpscale)
-				love.graphics.print( "wins!", 141*mpscale, 20*mpscale, 0, mpscale)
-				for i = 1, 5 do
-					love.graphics.draw( congratsline, (86+(8*i-1))*mpscale, 28*mpscale, 0, mpscale, mpscale)
-					love.graphics.draw( congratsline, (134+(8*i-1))*mpscale, 28*mpscale, 0, mpscale, mpscale)
-				end
-			end
-		elseif winner == 2 then
-			--luigi
-			if jumpframe == false then
-				love.graphics.draw( luigiidle, luigibody:getX()*physicsmpscale, luigibody:getY()*physicsmpscale, luigibody:getAngle(), mpscale, mpscale, 14, 15.5)
-			else
-				love.graphics.draw( luigijump, luigibody:getX()*physicsmpscale, luigibody:getY()*physicsmpscale, luigibody:getAngle(), mpscale, mpscale, 14, 15.5)
-			end
-			
-			--mario
-			if cryframe == false then
-				love.graphics.draw( mariocry1, 83*mpscale, 66*mpscale, 0, mpscale, mpscale)
-			else
-				love.graphics.draw( mariocry2, 83*mpscale, 66*mpscale, 0, mpscale, mpscale)
-				love.graphics.print( "luigi", 93*mpscale, 20*mpscale, 0, mpscale)
-				love.graphics.print( "wins!", 141*mpscale, 20*mpscale, 0, mpscale)
-				for i = 1, 5 do
-					love.graphics.draw( congratsline, (86+(8*i-1))*mpscale, 28*mpscale, 0, mpscale, mpscale)
-					love.graphics.draw( congratsline, (134+(8*i-1))*mpscale, 28*mpscale, 0, mpscale, mpscale)
-				end
-			end
-		else --draw
-			--mario
-			love.graphics.draw( marioidle, 84*mpscale, 69*mpscale, 0, mpscale, mpscale)
-			if cryframe == false then
-				love.graphics.print( "draw", 160*mpscale, 40*mpscale, 0, mpscale)
-			end
-			
-			--luigi
-			love.graphics.draw( luigiidle, 162*mpscale, 65*mpscale,  0, mpscale, mpscale)
-			if cryframe == false then
-				love.graphics.print( "draw", 80*mpscale, 40*mpscale, 0, mpscale)
-			end
-			
-		end
+		return
 	end
 	
+	local won, lost = versuscharacter(winner), versuscharacter(3 - winner)
+	local image = jumpframe and won.jump or won.idle
+	love.graphics.draw( image, winnerbody:getX()*physicsmpscale, winnerbody:getY()*physicsmpscale, winnerbody:getAngle(), mpscale, mpscale, won.originx, won.originy)
+	
+	if cryframe == false then
+		love.graphics.draw( lost.cry1, lost.cryx*mpscale, lost.cryy*mpscale, 0, mpscale, mpscale)
+	else
+		love.graphics.draw( lost.cry2, lost.cryx*mpscale, lost.cryy*mpscale, 0, mpscale, mpscale)
+		love.graphics.print( won.name, 93*mpscale, 20*mpscale, 0, mpscale)
+		love.graphics.print( "wins!", 141*mpscale, 20*mpscale, 0, mpscale)
+		for i = 1, 5 do
+			love.graphics.draw( congratsline, (86+(8*i-1))*mpscale, 28*mpscale, 0, mpscale, mpscale)
+			love.graphics.draw( congratsline, (134+(8*i-1))*mpscale, 28*mpscale, 0, mpscale, mpscale)
+		end
+	end
 end
 	
 function gameBmulti_update(dt)
-
 	--NEXTPIECE ROTATION (rotating allday erryday)
 	nextpiecerot = nextpiecerot + nextpiecerotspeed*dt
 	while nextpiecerot > math.pi*2 do
@@ -233,27 +187,10 @@ function gameBmulti_update(dt)
 		endblockp2()
 	end
 	newtime = love.timer.getTime()
+	
+	--landing a block can end the game, so pick the state's update only now
 	if gamestarted == false then
-		if newtime - starttimer > 3 then
-			if musicno < 4 then
-				love.audio.play(music[musicno])
-			end
-			startgame()
-			gamestarted = true
-		elseif newtime - starttimer > 2 and beeped[3] == false then
-			beeped[3] = true
-			love.audio.stop(sfx.highscorebeep)
-			love.audio.play(sfx.highscorebeep)
-		elseif newtime - starttimer > 1 and beeped[2] == false then
-			beeped[2] = true
-			love.audio.stop(sfx.highscorebeep)
-			love.audio.play(sfx.highscorebeep)
-		elseif newtime - starttimer > 0 and beeped[1] == false then
-			beeped[1] = true
-			love.audio.stop(sfx.highscorebeep)
-			love.audio.play(sfx.highscorebeep)
-		end
-		
+		versuscountdown()
 	elseif gamestate == "gameBmulti" then
 		if p1fail == false then
 			steerpiece(multipieces[1][counterp1].body, dt, "p1", difficulty_speed*5)
@@ -262,8 +199,7 @@ function gameBmulti_update(dt)
 			steerpiece(multipieces[2][counterp2].body, dt, "p2", difficulty_speed*5)
 		end
 	elseif gamestate == "failingBmulti" then
-		local timepassed = love.timer.getTime() - colorizetimer
-		if timepassed > colorizeduration then
+		if love.timer.getTime() - colorizetimer > colorizeduration then
 			gamestate = "failedBmulti"
 
 			wallfxturesp1[2]:destroy()
@@ -273,119 +209,110 @@ function gameBmulti_update(dt)
 			love.audio.play(sfx.gameover2)
 		end
 	elseif gamestate == "failedBmulti" then
-		local clearcheck = true
-		for player = 1, 2 do
-			for i, piece in pairs(multipieces[player]) do
-				if piece.body:getY() < 162*mpscale then
-					clearcheck = false
-				end
-			end
-		end
-		
-		if clearcheck then --RESULTS SCREEN INI!--
-			gamestate = "gameBmulti_results"
-			jumptimer = love.timer.getTime()
-			crytimer = love.timer.getTime()
-			
-			love.audio.play(sfx.musicresults)
-
-			local resultsfloorbody = love.physics.newBody(world, 32, -64, "static")
-			local resultsfloorshape = love.physics.newPolygonShape(196,448, 196,480, 836,480, 836,448)
-			local resultsfloorfixture = love.physics.newFixture(resultsfloorbody, resultsfloorshape)
-			resultsfloorfixture:setUserData("resultsfloor")
-
-			if winner == 1 then
-				mariobody = love.physics.newBody(world, 388, 320, "dynamic")
-				local marioshape = love.physics.newRectangleShape(64, 108)
-				local mariofixture = love.physics.newFixture(mariobody, marioshape, 1)
-				mariofixture:setMask(3)
-				mariofixture:setUserData("mario")
-				mariobody:setLinearDamping(0.5)
-				mariobody:resetMassData()
-			elseif winner == 2 then
-				luigibody = love.physics.newBody(world, 704, 320, "dynamic")
-				local luigishape = love.physics.newRectangleShape(64, 124)
-				local luigifixture = love.physics.newFixture(luigibody, luigishape, 1)
-				luigifixture:setMask(2)
-				luigifixture:setUserData("luigi")
-				luigibody:setLinearDamping(0.5)
-				luigibody:resetMassData()
-			end
-			
-			if winner == 1 then
-				mariobody:setY(mariobody:getY()-1)
-				local x, y = mariobody:getLinearVelocity( )
-				mariobody:setLinearVelocity(x, -300)
-			elseif winner == 2 then
-				luigibody:setY(luigibody:getY()-1)
-				local x, y = luigibody:getLinearVelocity( )
-				luigibody:setLinearVelocity(x, -300)
-			end
-			jumpframe = true
+		if piecesfallenout() then
+			startresults()
 		end
 	elseif gamestate == "gameBmulti_results" then
-		local jumptimepassed = love.timer.getTime() - jumptimer
-		if jumptimepassed > 2 then
-			jumptimer = love.timer.getTime()
-			jumpframe = true
-			if winner == 1 then
-				mariobody:setY(mariobody:getY()-1)
-				local x, y = mariobody:getLinearVelocity( )
-				mariobody:setLinearVelocity(x, -300)
-			elseif winner == 2 then
-				luigibody:setY(luigibody:getY()-1)
-				local x, y = luigibody:getLinearVelocity( )
-				luigibody:setLinearVelocity(x, -300)
+		updateresults()
+	end
+end
+
+function versuscountdown() --beeps on each second of the 3 second countdown, then starts the game
+	if newtime - starttimer > 3 then
+		if musicno < 4 then
+			love.audio.play(music[musicno])
+		end
+		startgame()
+		gamestarted = true
+		return
+	end
+	local second = math.ceil(newtime - starttimer)
+	if second >= 1 and beeped[second] == false then
+		beeped[second] = true
+		love.audio.stop(sfx.highscorebeep)
+		love.audio.play(sfx.highscorebeep)
+	end
+end
+
+function piecesfallenout() --true once both players' pieces have dropped out of the playfield
+	for player = 1, 2 do
+		for i, piece in pairs(multipieces[player]) do
+			if piece.body:getY() < 162*mpscale then
+				return false
 			end
 		end
-		
-		local crytimepassed = love.timer.getTime() - crytimer
-		if crytimepassed > 0.4 then
-			cryframe = not cryframe
-			crytimer = love.timer.getTime()
+	end
+	return true
+end
+
+function startresults() --floor for the characters, and the winner's physics body
+	gamestate = "gameBmulti_results"
+	jumptimer = love.timer.getTime()
+	crytimer = love.timer.getTime()
+	
+	love.audio.play(sfx.musicresults)
+
+	local resultsfloorbody = love.physics.newBody(world, 32, -64, "static")
+	local resultsfloorshape = love.physics.newPolygonShape(196,448, 196,480, 836,480, 836,448)
+	local resultsfloorfixture = love.physics.newFixture(resultsfloorbody, resultsfloorshape)
+	resultsfloorfixture:setUserData("resultsfloor")
+
+	if winner ~= 3 then
+		local won = versuscharacter(winner)
+		winnerbody = love.physics.newBody(world, won.x, 320, "dynamic")
+		local fixture = love.physics.newFixture(winnerbody, love.physics.newRectangleShape(64, won.height), 1)
+		fixture:setMask(won.mask)
+		fixture:setUserData(won.name)
+		winnerbody:setLinearDamping(0.5)
+		winnerbody:resetMassData()
+		winnerjump()
+	end
+	jumpframe = true
+end
+
+function winnerjump()
+	winnerbody:setY(winnerbody:getY()-1)
+	local x, y = winnerbody:getLinearVelocity( )
+	winnerbody:setLinearVelocity(x, -300)
+end
+
+function updateresults() --the winner jumps every 2 seconds and can be pushed around; the loser's crying animates
+	if love.timer.getTime() - jumptimer > 2 then
+		jumptimer = love.timer.getTime()
+		jumpframe = true
+		if winner ~= 3 then
+			winnerjump()
 		end
-		
-		if winner == 1 then
-			if controls.isDown("leftp1") then
-				local x, y = mariobody:getWorldCenter()
-				mariobody:applyForce( -30, 0, x, y-8 )
-			end
-			if controls.isDown("rightp1") then
-				local x, y = mariobody:getWorldCenter()
-				mariobody:applyForce( 30, 0, x, y-8 )
-			end
-		elseif winner == 2 then
-			if controls.isDown("leftp2") then
-				local x, y = luigibody:getWorldCenter()
-				luigibody:applyForce( -30, 0, x, y-8 )
-			end
-			if controls.isDown("rightp2") then
-				local x, y = luigibody:getWorldCenter()
-				luigibody:applyForce( 30, 0, x, y-8 )
-			end
+	end
+	
+	if love.timer.getTime() - crytimer > 0.4 then
+		cryframe = not cryframe
+		crytimer = love.timer.getTime()
+	end
+	
+	if winner ~= 3 then
+		local won = versuscharacter(winner)
+		if controls.isDown(won.left) then
+			local x, y = winnerbody:getWorldCenter()
+			winnerbody:applyForce( -30, 0, x, y-8 )
+		end
+		if controls.isDown(won.right) then
+			local x, y = winnerbody:getWorldCenter()
+			winnerbody:applyForce( 30, 0, x, y-8 )
 		end
 	end
 end
 
+function mirrorpiece(kind) --player 1 gets the mirror image of player 2's pieces: J<->L, S<->Z
+	local mirrored = {[2] = 3, [3] = 2, [5] = 7, [7] = 5}
+	return mirrored[kind] or kind
+end
+
 function startgame()
-	--FIRST "nextpiece" for p1 (Which gets immediately removed, duh)--
-	if randomtable[1] == 2 then
-		nextpiecep1 = 3
-	elseif randomtable[1] == 3 then
-		nextpiecep1 = 2
-	elseif randomtable[1] == 5 then
-		nextpiecep1 = 7
-	elseif randomtable[1] == 7 then
-		nextpiecep1 = 5
-	else
-		nextpiecep1 = randomtable[1]
-	end
-	
-	----------------
-	--FIRST "nextpiece" for p2 (Which gets immediately removed, duh)--
+	--first "nextpiece" of each player, which gets used right away--
+	nextpiecep1 = mirrorpiece(randomtable[1])
 	nextpiecep2 = randomtable[1]
 	
-	----------------
 	game_addTetriBmultip1()
 	game_addTetriBmultip2()
 end
@@ -400,19 +327,7 @@ function game_addTetriBmultip1()
 	if counterp1 > #randomtable then
 		table.insert(randomtable, math.random(7))
 	end
-	--MIRROR PIECES
-	if randomtable[counterp1] == 2 then
-		nextpiecep1 = 3
-	elseif randomtable[counterp1] == 3 then
-		nextpiecep1 = 2
-	elseif randomtable[counterp1] == 5 then
-		nextpiecep1 = 7
-	elseif randomtable[counterp1] == 7 then
-		nextpiecep1 = 5
-	else
-		nextpiecep1 = randomtable[counterp1]
-	end
-	
+	nextpiecep1 = mirrorpiece(randomtable[counterp1])
 end
 
 function game_addTetriBmultip2()
@@ -466,10 +381,8 @@ function collideBmulti(a, b)
 			endblockp2pending = true
 		end
 	elseif gamestate == "gameBmulti_results" then
-		if (aData == "mario" and bData == "resultsfloor") or (bData == "mario" and aData == "resultsfloor") then
-			jumpframe = false
-		elseif (aData == "luigi" and bData == "resultsfloor") or (bData == "luigi" and aData == "resultsfloor") then
-			jumpframe = false
+		if (aData == "mario" or aData == "luigi" or bData == "mario" or bData == "luigi") and (aData == "resultsfloor" or bData == "resultsfloor") then
+			jumpframe = false --the winner landed
 		end
 	end
 end
