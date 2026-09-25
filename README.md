@@ -9,6 +9,17 @@ Runs on LÖVE 11.5 (ported from LÖVE 0.7.2)
 1. Install LÖVE 11.5 from https://love2d.org/
 2. Run the game with: `love .`
 
+## Playing in a web browser
+The `web/` folder builds the game for browsers with [love.js](https://github.com/Davidobot/love.js) (LÖVE compiled to WebAssembly). You need Node.js 18 or newer.
+
+```
+cd web
+npm install
+npm start
+```
+
+Then open http://localhost:8080. `npm start` rebuilds the game from the current source and serves it; run `npm run build` and `npm run serve` separately if you prefer. The output in `web/build/` is a static site that any web server can host.
+
 ## Controls
 - Menus: arrow keys, Enter to select, Escape to go back
 - Single player: left/right to move, down to drop faster, Z/Y/W and X to rotate, Enter to pause
