@@ -10,7 +10,7 @@ Runs on LÖVE 11.5 (ported from LÖVE 0.7.2)
 2. Run the game with: `love .`
 
 ## Playing in a web browser
-The `web/` folder builds the game for browsers with [love.js](https://github.com/Davidobot/love.js) (LÖVE compiled to WebAssembly). You need Node.js 18 or newer.
+The `web/` folder builds the game for browsers with [love.js](https://github.com/Davidobot/love.js) (LÖVE compiled to WebAssembly). It is pinned to a love.js commit that contains LÖVE 11.5, since the npm release is still on 11.4. You need Node.js 18 or newer and git (npm fetches love.js from GitHub).
 
 ```
 cd web
