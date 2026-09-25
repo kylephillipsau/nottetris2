@@ -24,7 +24,6 @@ function gameA_load()
 	world = love.physics.newWorld(0, 500, true )
 
 	tetris = {} --pieces: {kind, body, shapes, fixtures, image, imagedata}. 1 is the falling piece
-	tetrishapescopy = {}
 	local wallbodies, wallshapes
 	wallbodies, wallshapes, wallfixtures = newwalls(world, {
 		{points = {-8,-64, -8,672, 24,672, 24,-64}, data = {"left"}, friction = 0.00001},
@@ -250,346 +249,207 @@ function getintersectX(shape, y, body) --returns left and right collision points
 	end
 end
 
-function removeline(lineno) --Does all necessary things to clear a line. Refineshape and cutimage included.
-	local above, inside, below, refined, rotation, v, x1, x2
-	local coordinates, coords, cotable, currentcoords, shapegroups, numberofgroups, backupimagedata
-	local upperleftx, upperrightx, lowerleftx, lowerrightx, linearspeedX, linearspeedY
+function removeline(lineno) --clears a line: cuts every piece crossing it, splitting pieces that fall apart into separate bodies
 	local upperline = (lineno - 1) * 32
 	local lowerline = lineno * 32
-	local coordinateproperties = {}
 	local numberofbodies = highestbody()
 	local ioffset = 0
 	tetris[1] = false --placeholder for the falling piece so table.remove below works
-	for i = 2, numberofbodies do --every body
+	for i = 2, numberofbodies do
 		if i-ioffset > numberofbodies then
 			break
 		end
-		v = tetris[i-ioffset].body
-		if i-ioffset > 1 then
-			refined = false
-			coordinateproperties[i-ioffset] = {}
-			tetrishapescopy = {}
-			
-			upperleftx = 640
-			lowerleftx = 640
-			
-			upperrightx = 0
-			lowerrightx = 0
-			for j, w in pairs(tetris[i-ioffset].shapes) do
-				x1, x2 = getintersectX(tetris[i-ioffset].shapes[j], upperline, tetris[i-ioffset].body)
-				
-				if x1 < upperleftx and x1 ~= -1 then
-					upperleftx = x1
-				end
-				if x2 > upperrightx then
-					upperrightx = x2
-				end
-				
-				x1, x2 = getintersectX(tetris[i-ioffset].shapes[j], lowerline, tetris[i-ioffset].body)
-				
-				if x1 < lowerleftx and x1 ~= -1 then
-					lowerleftx = x1
-				end
-				if x2 > lowerrightx then
-					lowerrightx = x2
-				end
-			end
-			
-			for j, w in pairs(tetris[i-ioffset].shapes) do --Every shape
-				above = false
-				inside = false
-				below = false
-				coordinateproperties[i-ioffset][j] = {}
-				coordinates = getPoints2table(w, tetris[i-ioffset].body)
-				
-				for y = 1, #coordinates, 2 do --Every Point
-					if coordinates[y+1] < upperline then --POINT ABOVE CUTRECT
-						coordinateproperties[i-ioffset][j][math.ceil(y/2)] = 1
-						above = true
-					elseif coordinates[y+1] >= upperline and coordinates[y+1] <= lowerline then --POINT INSIDE CUTRECT!
-						coordinateproperties[i-ioffset][j][math.ceil(y/2)] = 2
-						inside = true
-					elseif coordinates[y+1] > lowerline then --POINT BELOW CUTRECT
-						coordinateproperties[i-ioffset][j][math.ceil(y/2)] = 3
-						below = true
-					end
-				end
-				if above == true and inside == true and below == false then
-					tetrishapescopy[#tetrishapescopy+1]=refineshape(upperline, 1, i-ioffset, v, j, w)
-					refined = true
-				elseif above == true and inside == true and below == true then
-					tetrishapescopy[#tetrishapescopy+1]=refineshape(upperline, 1, i-ioffset, v, j, w)
-					tetrishapescopy[#tetrishapescopy+1]=refineshape(lowerline, -1, i-ioffset, v, j, w)
-					refined = true
-				elseif above == false and inside == true and below == false then
-					--nothing because it'll get removed (don't delete the elseif though cause it'll go though the "else")
-					refined = true
-				elseif above == false and inside == true and below == true then
-					tetrishapescopy[#tetrishapescopy+1]=refineshape(lowerline, -1, i-ioffset, v, j, w)
-					refined = true
-				elseif above == true and inside == false and below == true then
-					tetrishapescopy[#tetrishapescopy+1]=refineshape(upperline, 1, i-ioffset, v, j, w)
-					tetrishapescopy[#tetrishapescopy+1]=refineshape(lowerline, -1, i-ioffset, v, j, w)
-					refined = true
-				else
-					cotable = getPoints2table(tetris[i-ioffset].shapes[j], tetris[i-ioffset].body)
-					for var = 1, #cotable, 2 do
-						cotable[var], cotable[var+1] = tetris[i-ioffset].body:getLocalPoint(cotable[var], cotable[var+1])
-					end
-					tetrishapescopy[#tetrishapescopy+1] = love.physics.newPolygonShape(unpack(cotable))
-				end
-			end
-			if refined == true then
-			
-			--create for either above our below; or both if body is cut in center.
-			--gotta set the bodyids here and reuse them in the "check for disconnect shapes" further down
-			for a, b in pairs(tetris[i-ioffset].fixtures) do --remove all shapes
-				b:destroy()
-			end
-			tetris[i-ioffset].fixtures = {}
-			
-			tetris[i-ioffset].shapes = {}
-			
-			if #tetrishapescopy == 0 then --body empty
-				if tetris[i-ioffset].body then
-					tetris[i-ioffset].body:destroy()
-					table.remove(tetris, i-ioffset)
-					numberofbodies = numberofbodies - 1
-					ioffset = ioffset + 1
-				end
-			else
-				
-				----check for disconnected shapes
-				--apply group numbers to shapes then loop through each existing value, creating a new body for everything > 1 (max should be 3 I think).
-				shapegroups = {}
-				numberofgroups = 0
-				for a, b in pairs(tetrishapescopy) do --through all shapes
-					shapegroups[a] = 0
-					currentcoords = getPoints2table(b)
-					for shapecounter = 1, a - 1 do --Through all previously set groups
-						coords = getPoints2table(tetrishapescopy[shapecounter])
-						for currentcoordsvar = 1, #currentcoords/2 do --through all coords in the current shape
-							for coordsvar = 1, #coords/2 do --through all coords in all previously set groups (Holy shit 6 stacked "for" loops; I code like an asshole!)
-								if math.abs(currentcoords[currentcoordsvar*2-1] - coords[coordsvar*2-1]) < 2 and math.abs(currentcoords[currentcoordsvar*2] - coords[coordsvar*2]) < 2 then
-									shapegroups[a] = shapegroups[shapecounter]
-								end
-							end
-						end
-					end
-					
-					if shapegroups[a] == 0 then --create new group
-						numberofgroups = numberofgroups + 1
-						shapegroups[a] = numberofgroups
-					end
-				end
-				
-				--All shapes have now an assigned group number in "shapegroups[shape] = groupnumber" :) yay.
-				
-				for a = 1, numberofgroups do
-					if a == 1 then --reassign the old bodyid
-						rotation = tetris[i-ioffset].body:getAngle()
-						local oldX = tetris[i-ioffset].body:getX()
-						local oldY = tetris[i-ioffset].body:getY()
-						tetris[i-ioffset].body:destroy()
-						tetris[i-ioffset].body = love.physics.newBody(world, oldX, oldY, "dynamic")
-						tetris[i-ioffset].body:setAngle(rotation)
-						tetris[i-ioffset].shapes = {}
-						tetris[i-ioffset].fixtures = {}
-						for b, c in pairs(tetrishapescopy) do
-							if shapegroups[b] == a then
-								cotable = getPoints2table(tetrishapescopy[b]) --already local to the old body, which shares position and angle with the new one
-								tetris[i-ioffset].shapes[#tetris[i-ioffset].shapes+1] = love.physics.newPolygonShape(unpack(cotable))
-								tetris[i-ioffset].fixtures[#tetris[i-ioffset].fixtures+1] = love.physics.newFixture(tetris[i-ioffset].body, tetris[i-ioffset].shapes[#tetris[i-ioffset].shapes], 1)
-								tetris[i-ioffset].fixtures[#tetris[i-ioffset].fixtures]:setUserData({i-ioffset}) --set the fixture name for collision
-							end
-						end
-
-						--save old imagedata to local var first in case we create a new bodyid..
-						backupimagedata = love.image.newImageData( tetris[i-ioffset].imagedata:getWidth(), tetris[i-ioffset].imagedata:getHeight())
-						backupimagedata:paste(tetris[i-ioffset].imagedata, 0, 0, 0, 0, tetris[i-ioffset].imagedata:getWidth(), tetris[i-ioffset].imagedata:getHeight() )
-
-						--cut the image.
-						cutimage(i-ioffset, numberofgroups)
-
-						--mass confusion
-						tetris[i-ioffset].body:resetMassData()
-
-						local mass = tetris[i-ioffset].body:getMass()
-						if mass < minmass then
-							for i, v in pairs(tetris[i-ioffset].fixtures) do
-								v:setDensity( minmass/mass )
-							end
-
-							tetris[i-ioffset].body:resetMassData()
-
-							for i, v in pairs(tetris[i-ioffset].fixtures) do
-								v:setDensity( 1 )
-							end
-						end
-						
-					else --create new bodyid
-						tetris[highestbody()+1] = {}
-						tetris[highestbody()].body = love.physics.newBody(world, tetris[i-ioffset].body:getX(), tetris[i-ioffset].body:getY(), "dynamic")
-						tetris[highestbody()].body:setAngle(tetris[i-ioffset].body:getAngle())
-						tetris[highestbody()].shapes = {}
-						tetris[highestbody()].fixtures = {}
-
-						for b, c in pairs(tetrishapescopy) do
-							if shapegroups[b] == a then
-								cotable = getPoints2table(tetrishapescopy[b]) --already local to the old body, which shares position and angle with the new one
-								tetris[highestbody()].shapes[#tetris[highestbody()].shapes+1] = love.physics.newPolygonShape(unpack(cotable))
-								tetris[highestbody()].fixtures[#tetris[highestbody()].fixtures+1] = love.physics.newFixture(tetris[highestbody()].body, tetris[highestbody()].shapes[#tetris[highestbody()].shapes], 1)
-								tetris[highestbody()].fixtures[#tetris[highestbody()].fixtures]:setUserData({highestbody()}) --set the fixture name for collision
-							end
-						end
-
-						linearspeedX, linearspeedY = tetris[i-ioffset].body:getLinearVelocity()
-						tetris[highestbody()].body:setLinearVelocity(linearspeedX, linearspeedY)
-						tetris[highestbody()].body:setLinearDamping(0.5)
-						tetris[highestbody()].body:setBullet(true)
-						tetris[highestbody()].body:setAngularVelocity(tetris[i-ioffset].body:getAngularVelocity())
-
-						tetris[highestbody()].imagedata = love.image.newImageData( backupimagedata:getWidth(), backupimagedata:getHeight())
-						tetris[highestbody()].imagedata:paste( backupimagedata, 0, 0, 0, 0, backupimagedata:getWidth(), backupimagedata:getHeight() )
-						tetris[highestbody()].image = love.graphics.newImage( tetris[highestbody()].imagedata )
-						tetris[highestbody()].kind = tetris[i-ioffset].kind
-
-
-						--cut the image
-						cutimage(highestbody(), numberofgroups)
-
-						--mass confusion
-						tetris[highestbody()].body:resetMassData()
-
-						local mass = tetris[highestbody()].body:getMass()
-						if mass < minmass then
-							for i, v in pairs(tetris[highestbody()].fixtures) do
-								v:setDensity( minmass/mass )
-							end
-
-							tetris[highestbody()].body:resetMassData()
-
-							for i, v in pairs(tetris[highestbody()].fixtures) do
-								v:setDensity( 1 )
-							end
-						end
-					end
-				end		
-			end --if body empty
-			end --if refined
-			
-			--clean up the tables..
-			for a, b in pairs(tetrishapescopy) do
-				if tetrishapescopy[a] then
-					tetrishapescopy[a]:release()
-					tetrishapescopy[a] = nil
-				end
-			end
-			
-			tetrishapescopy = {}
-		end --if i-ioffset > 1
+		if cutpiece(i-ioffset, upperline, lowerline) then --piece was entirely inside the line
+			numberofbodies = numberofbodies - 1
+			ioffset = ioffset + 1
+		end
 	end
 end
 
-function cutimage(bodyid, numberofgroups) --cuts the image of a body based on its shapes (2nd argument might be obsolete)
+function cutpiece(index, upperline, lowerline) --cuts the part of a piece between the lines away. returns true if nothing is left of it
+	local piece = tetris[index]
+	local newshapes, refined = splitshapes(piece, upperline, lowerline)
+	local removed = false
 	
-	local width = tetris[bodyid].imagedata:getWidth()
-	local height = tetris[bodyid].imagedata:getHeight()
-	
-	--[[ This old method used the angle between the two cutting points and all the other points to determine if the point should be removed. 
-		 But it sometimes bugged out for reasons I couldn't figure out so I'm going for the less good looking easy approach. Boo :(
-	
-	local bodyang = tetris[bodyid].body:getAngle()
-	bodyang = math.mod(bodyang, math.pi)
-	
-	local highestx = -1
-	local lowestx = 160*scale
-	for i, v in pairs(tetris[bodyid].shapes) do
-		x1, x2 = getintersectX(v, upperline-0.01)
-		if x1 < lowestx and x1 ~= -1 then
-			lowestx = x1
+	if refined then
+		for i, fixture in pairs(piece.fixtures) do
+			fixture:destroy()
 		end
-		if x2 > highestx thena
-			highestx = x2
+		piece.fixtures = {}
+		piece.shapes = {}
+		
+		if #newshapes == 0 then
+			piece.body:destroy()
+			table.remove(tetris, index)
+			removed = true
+		else
+			local shapegroups, numberofgroups = groupconnectedshapes(newshapes)
+			rebuildpiece(index, newshapes, shapegroups, numberofgroups)
 		end
 	end
 	
-	--get if to chose lower or upper line
-	local posy = getPoints2table(tetris[bodyid].shapes[1])
-	posy = posy[2]
-	
-	if posy > (upperline + lowerline) / 2 then
-		line = lowerline
-	else
-		line = upperline
+	for i, shape in pairs(newshapes) do
+		shape:release()
 	end
-	
-	--convert points to local coordinates
-	local dummy1, dummy2 = tetris[bodyid].body:getLocalPoint( lowestx, line )
-	dummy1, dummy2 = dummy1 + width/2, dummy2 + height/2
-	local point1 = {dummy1, dummy2}
-	
-	local dummy1, dummy2 = tetris[bodyid].body:getLocalPoint( highestx, line )
-	dummy1, dummy2 = dummy1 + width/2, dummy2 + height/2
-	local point2 = {dummy1, dummy2}	
-	
-	local leftlimit = 160*scale
-	local rightlimit = -1
-	
-	--find out the limits of there's more than 1 body being created
-	if numberofgroups > 1 then
-		for s = 1, #tetris[bodyid].shapes do
-			local cotable = getPoints2table(tetris[bodyid].shapes[s])
-			for i = 1, #cotable, 2 do
-				local x, y = tetris[bodyid].body:getLocalPoint(cotable[i], cotable[i+1])
-				x = x+width/2
-				if x < leftlimit then
-					leftlimit = x
-				elseif x > rightlimit then
-					rightlimit = x
+	return removed
+end
+
+function splitshapes(piece, upperline, lowerline) --returns the piece's shapes with the part between the lines removed (local to its body), and whether any shape was cut
+	local body = piece.body
+	local newshapes = {}
+	local refined = false
+	for j, shape in pairs(piece.shapes) do
+		local above, inside, below = false, false, false
+		local coordinates = getPoints2table(shape, body)
+		for y = 2, #coordinates, 2 do
+			if coordinates[y] < upperline then
+				above = true
+			elseif coordinates[y] <= lowerline then
+				inside = true
+			else
+				below = true
+			end
+		end
+		
+		if inside or (above and below) then
+			refined = true
+			if above then
+				newshapes[#newshapes+1] = refineshape(upperline, 1, body, shape)
+			end
+			if below then
+				newshapes[#newshapes+1] = refineshape(lowerline, -1, body, shape)
+			end
+		else --untouched, copy it
+			local cotable = getPoints2table(shape, body)
+			for var = 1, #cotable, 2 do
+				cotable[var], cotable[var+1] = body:getLocalPoint(cotable[var], cotable[var+1])
+			end
+			newshapes[#newshapes+1] = love.physics.newPolygonShape(unpack(cotable))
+		end
+	end
+	return newshapes, refined
+end
+
+function groupconnectedshapes(shapes) --shapes sharing a corner belong to the same group. returns the group of each shape and the number of groups
+	local shapegroups = {}
+	local numberofgroups = 0
+	for a, shape in pairs(shapes) do
+		shapegroups[a] = 0
+		local currentcoords = getPoints2table(shape)
+		for shapecounter = 1, a - 1 do --through all previously grouped shapes
+			local coords = getPoints2table(shapes[shapecounter])
+			for currentcoordsvar = 1, #currentcoords/2 do
+				for coordsvar = 1, #coords/2 do
+					if math.abs(currentcoords[currentcoordsvar*2-1] - coords[coordsvar*2-1]) < 2 and math.abs(currentcoords[currentcoordsvar*2] - coords[coordsvar*2]) < 2 then
+						shapegroups[a] = shapegroups[shapecounter]
+					end
 				end
 			end
 		end
-	else 
-		leftlimit = -1
-		rightlimit = 160*scale
+		
+		if shapegroups[a] == 0 then --create new group
+			numberofgroups = numberofgroups + 1
+			shapegroups[a] = numberofgroups
+		end
 	end
+	return shapegroups, numberofgroups
+end
+
+function rebuildpiece(index, shapes, shapegroups, numberofgroups) --gives the piece a fresh body with the shapes of group 1; every further group becomes a new piece
+	local piece = tetris[index]
+	local oldbody = piece.body
+	local rotation = oldbody:getAngle()
+	local oldX, oldY = oldbody:getX(), oldbody:getY()
+	oldbody:destroy()
+	piece.body = love.physics.newBody(world, oldX, oldY, "dynamic")
+	piece.body:setAngle(rotation)
+	piece.shapes = {}
+	piece.fixtures = {}
+	addgroupfixtures(piece, index, shapes, shapegroups, 1)
 	
-	local ang = math.atan2(point2[1] - point1[1], point2[2] - point1[2])
-	ang = -ang + math.pi]]--
+	--keep the uncut image for the other groups before cutting this one
+	local backupimagedata = love.image.newImageData(piece.imagedata:getWidth(), piece.imagedata:getHeight())
+	backupimagedata:paste(piece.imagedata, 0, 0, 0, 0, piece.imagedata:getWidth(), piece.imagedata:getHeight())
+	cutimage(index)
+	enforceminmass(piece)
+	
+	for a = 2, numberofgroups do
+		local n = highestbody()+1
+		local newpiece = {kind = piece.kind, shapes = {}, fixtures = {}}
+		tetris[n] = newpiece
+		newpiece.body = love.physics.newBody(world, piece.body:getX(), piece.body:getY(), "dynamic")
+		newpiece.body:setAngle(piece.body:getAngle())
+		addgroupfixtures(newpiece, n, shapes, shapegroups, a)
+		
+		newpiece.body:setLinearVelocity(piece.body:getLinearVelocity())
+		newpiece.body:setLinearDamping(0.5)
+		newpiece.body:setBullet(true)
+		newpiece.body:setAngularVelocity(piece.body:getAngularVelocity())
+		
+		newpiece.imagedata = love.image.newImageData(backupimagedata:getWidth(), backupimagedata:getHeight())
+		newpiece.imagedata:paste(backupimagedata, 0, 0, 0, 0, backupimagedata:getWidth(), backupimagedata:getHeight())
+		cutimage(n)
+		enforceminmass(newpiece)
+	end
+end
+
+function addgroupfixtures(piece, index, shapes, shapegroups, group) --attaches copies of the shapes in a group to the piece's body. the shapes are local to the old body, which had the same position and angle
+	for b, shape in pairs(shapes) do
+		if shapegroups[b] == group then
+			local newshape = love.physics.newPolygonShape(shape:getPoints())
+			local fixture = love.physics.newFixture(piece.body, newshape, 1)
+			fixture:setUserData({index}) --set the fixture name for collision
+			piece.shapes[#piece.shapes+1] = newshape
+			piece.fixtures[#piece.fixtures+1] = fixture
+		end
+	end
+end
+
+function enforceminmass(piece) --tiny cut off bits get heavier so they don't fly around
+	piece.body:resetMassData()
+	
+	local mass = piece.body:getMass()
+	if mass < minmass then
+		for i, fixture in pairs(piece.fixtures) do
+			fixture:setDensity( minmass/mass )
+		end
+		piece.body:resetMassData()
+		for i, fixture in pairs(piece.fixtures) do
+			fixture:setDensity( 1 )
+		end
+	end
+end
+
+function cutimage(bodyid) --makes the pixels of a piece's image that aren't covered by its fixtures transparent
+	local piece = tetris[bodyid]
+	local width = piece.imagedata:getWidth()
+	local height = piece.imagedata:getHeight()
 	
 	for y = 0, height-1 do
 		for x = 0, width-1 do
-		--[[local ang2 = math.atan2(x - point1[1], y - point1[2]) --PART OF OLD METHOD
-			ang2 = -ang2 + math.pi
-			
-			if (ang2 > ang and ang2 < ang + math.pi) or ang2 < ang - math.pi or (x < leftlimit or x > rightlimit) then
-				tetris[bodyid].imagedata:setPixel(x, y, 255, 255, 255, 0)
-			end]]
-			
-			local dummy1, dummy2 = tetris[bodyid].body:getWorldPoint((x-width/2+.5)*(4/scale), (y-height/2+.5)*(4/scale))
+			local worldx, worldy = piece.body:getWorldPoint((x-width/2+.5)*(4/scale), (y-height/2+.5)*(4/scale))
 			local deletepixel = true
 			
-			for i, v in pairs(tetris[bodyid].fixtures) do
-				if v:testPoint( dummy1, dummy2 ) then
+			for i, fixture in pairs(piece.fixtures) do
+				if fixture:testPoint( worldx, worldy ) then
 					deletepixel = false
 					break
 				end
 			end
 			
 			if deletepixel then
-				tetris[bodyid].imagedata:setPixel(x, y, 1, 1, 1, 0)
+				piece.imagedata:setPixel(x, y, 1, 1, 1, 0)
 			end
 		end
 	end
 	
-	tetris[bodyid].image = love.graphics.newImage( tetris[bodyid].imagedata )
+	piece.image = love.graphics.newImage( piece.imagedata )
 end
 
-function refineshape(line, mult, bodyid, body, shapeid, shape) --refines a shape using the old coordinates and the cutting line
-	local leftx, rightx = getintersectX(tetris[bodyid].shapes[shapeid], line, body)
+function refineshape(line, mult, body, shape) --cuts a shape at a line, keeping the part above it (mult 1) or below it (mult -1). returns the new shape local to body, or nil if too small
+	local leftx, rightx = getintersectX(shape, line, body)
 	if leftx ~= -1 then --Not sure what to do if not
-		local coords = getPoints2table(tetris[bodyid].shapes[shapeid], body)
+		local coords = getPoints2table(shape, body)
 		
 		--remove all points inside the cutting zone
 		local lastcutoff
@@ -638,11 +498,9 @@ function refineshape(line, mult, bodyid, body, shapeid, shape) --refines a shape
 				end
 				return love.physics.newPolygonShape(unpack(newcoords))
 			end
-		else
-			print("#coords")
 		end
 	else
-		local coords = getPoints2table(tetris[bodyid].shapes[shapeid], body)
+		local coords = getPoints2table(shape, body)
 		local newcoords={}
 		for i=1,#coords,2 do
 			newcoords[i],newcoords[i+1] = body:getLocalPoint(coords[i], coords[i+1])
@@ -651,211 +509,197 @@ function refineshape(line, mult, bodyid, body, shapeid, shape) --refines a shape
 	end
 end
 
-function checklinedensity(active) --checks all 18 lines and, if active == true, calls removeline. Also does scoring, sounds and stuff.
-	local leftx, rightx
-	--loop through every shape and add each area to a nax
-	
+function checklinedensity(active) --measures how full each line is; if active, also clears full lines. returns whether lines were cleared
+	measurelines()
+	if active then
+		return clearfulllines()
+	end
+end
+
+function measurelines() --linearea[line] = area covered by landed pieces in each of the 18 lines
 	linearea = {}
-	
 	for i = 1, 18 do
 		linearea[i] = 0
 	end
 	
 	for i = 2, highestbody() do
-		for j, k in pairs(tetris[i].shapes) do
-			local coords = getPoints2table(k, tetris[i].body)
-			--Get first and last involved line
-			local firstline = 19
-			local lastline =  0
-			
-			for point = 2, #coords, 2 do
-				if math.ceil(round(coords[point]) / 32) < firstline then
-					firstline = math.ceil(round(coords[point]) / 32)
-				elseif math.ceil(round(coords[point]) / 32) > lastline then
-					lastline = math.ceil(round(coords[point]) / 32)
-				end
-			end
-			
-			for line = firstline, lastline do
-				if line >= 1 and line <= 18 then
-					coords = getPoints2table(k, tetris[i].body)
-					
-					if line > firstline then
-						local offset = 0
-					
-						repeat
-							leftx, rightx = getintersectX(tetris[i].shapes[j], (line-1)*32+offset, tetris[i].body)
-							offset = offset + 1
-						until leftx ~= -1 or offset >= 32
-						
-						--remove all points above the line
-						local coi=2
-						local lastcutoff = nil
-						while coi <= #coords do
-							if coords[coi] <= (line-1)*32 then
-								table.remove(coords, coi)
-								table.remove(coords, coi-1)
-								lastcutoff = coi
-								coi=0
-							end
-							coi=coi+2
-						end
-						
-						--add points of top line (if points were cut off)
-						if lastcutoff then
-							table.insert(coords, lastcutoff-1,rightx)
-							table.insert(coords, lastcutoff,(line-1)*32)
-							
-							table.insert(coords, lastcutoff-1,leftx)
-							table.insert(coords, lastcutoff,(line-1)*32)
-						end
-					end
-					
-					if line < lastline then
-						local offset = 0
-						repeat
-							leftx, rightx = getintersectX(tetris[i].shapes[j], (line)*32 - offset, tetris[i].body)
-							offset = offset + 1
-						until leftx ~= -1 or offset >= 32
-						
-						--remove all points below the line
-						local coi=2
-						local lastcutoff = nil
-						while coi <= #coords do
-							if coords[coi] >= (line)*32 then
-								table.remove(coords, coi)
-								table.remove(coords, coi-1)
-								lastcutoff = coi
-								coi=0
-							end
-							coi=coi+2
-						end
-						
-						--add points of bottom line (if points were cut off)
-						if lastcutoff then
-							table.insert(coords, lastcutoff-1,leftx)
-							table.insert(coords, lastcutoff,(line)*32)
-							
-							table.insert(coords, lastcutoff-1,rightx)
-							table.insert(coords, lastcutoff,(line)*32)
-						end
-					end
-					
-					linearea[line] = linearea[line] + polygonarea(coords)
-				end
-			end
+		for j, shape in pairs(tetris[i].shapes) do
+			addshapelineareas(shape, tetris[i].body)
+		end
+	end
+end
+
+function addshapelineareas(shape, body) --splits a shape into the lines it spans and adds each part's area to linearea
+	local coords = getPoints2table(shape, body)
+	--Get first and last involved line
+	local firstline = 19
+	local lastline =  0
+	
+	for point = 2, #coords, 2 do
+		if math.ceil(round(coords[point]) / 32) < firstline then
+			firstline = math.ceil(round(coords[point]) / 32)
+		elseif math.ceil(round(coords[point]) / 32) > lastline then
+			lastline = math.ceil(round(coords[point]) / 32)
 		end
 	end
 	
-	if active then
-		local removedlines = false
-		local numberoflines = 0
-		linesremoved = {}
-		
-		for i = 1, 18 do
-			if linearea[i] > 1024*linecleartreshold then
-				if removedlines == false then
-					cuttingtimer = 0
-					removedlines = true
-					
-					--Save position, image, kind and image of each kind so I can draw them even after changing the actual parts.
-					
-					tetricutpos = {}
-					tetricutang = {}
-					tetricutkind = {}
-					tetricutimg = {}
-					
-					for i, v in pairs(tetris) do
-						if v then
-							table.insert(tetricutpos, tetris[i].body:getX())
-							table.insert(tetricutpos, tetris[i].body:getY())
-							table.insert(tetricutang, tetris[i].body:getAngle())
-							table.insert(tetricutkind, tetris[i].kind)
-							table.insert(tetricutimg, love.graphics.newImage(tetris[i].imagedata))
-						end
-					end
-					
-					--[[for j, k in pairs(tetris) do --CANCEL ALL BLOCK MOVEMENT
-						if k.setLinearVelocity then
-							k:setLinearVelocity(0, 0)
-							k:setAngularVelocity(0, 0)
-						end
-					end]]
-				end
-				
-				linesremoved[i] = true
-				numberoflines = numberoflines + 1
-				linesscore = linesscore + 1
+	for line = firstline, lastline do
+		if line >= 1 and line <= 18 then
+			coords = getPoints2table(shape, body)
+			
+			if line > firstline then
+				local leftx, rightx = findintersectX(shape, body, (line-1)*32, 1)
+				cutpointsabove(coords, (line-1)*32, leftx, rightx)
 			end
+			
+			if line < lastline then
+				local leftx, rightx = findintersectX(shape, body, line*32, -1)
+				cutpointsbelow(coords, line*32, leftx, rightx)
+			end
+			
+			linearea[line] = linearea[line] + polygonarea(coords)
 		end
+	end
+end
+
+function findintersectX(shape, body, y, direction) --like getintersectX, but moves the line up to 32 pixels in direction until it hits the shape
+	local leftx, rightx
+	local offset = 0
+	repeat
+		leftx, rightx = getintersectX(shape, y + offset*direction, body)
+		offset = offset + 1
+	until leftx ~= -1 or offset >= 32
+	return leftx, rightx
+end
+
+function cutpointsabove(coords, y, leftx, rightx) --removes the polygon's points above y, closing it along y between leftx and rightx
+	local coi=2
+	local lastcutoff = nil
+	while coi <= #coords do
+		if coords[coi] <= y then
+			table.remove(coords, coi)
+			table.remove(coords, coi-1)
+			lastcutoff = coi
+			coi=0
+		end
+		coi=coi+2
+	end
 	
-		if removedlines then
-			if numberoflines >= 4 then
-				love.audio.stop(fourlineclear)
-				love.audio.play(fourlineclear)
-			else
-				love.audio.stop(lineclear)
-				love.audio.play(lineclear)
-			end
-			
-			--Possible scoring functions:
-			-- (numberoflines^2*40)+(numberoflines*50)* averagearea^8 (mine)
-			-- (NUMOFLINES*3)^(AREA^10)*20+NUMOFLINES^2*40 (murks)
-			--old scoring
-			--[[
-			if numberoflines == 1 then
-				scorescore = scorescore + 40
-			elseif numberoflines == 2 then
-				scorescore = scorescore + 100
-			elseif numberoflines == 3 then
-				scorescore = scorescore + 300
-			elseif numberoflines == 4 then
-				scorescore = scorescore + 800
-			else
-				scorescore = scorescore + numberoflines*300
-			end
-			]]
-			
-			--calculate average area
-			local averagearea = 0
-			for i = 1, 18 do
-				if linesremoved[i] then
-					averagearea = averagearea + linearea[i]
-				end
-			end
-			averagearea = averagearea / numberoflines / 10240
-			
-			local scoreadd = math.ceil((numberoflines*3)^(averagearea^10)*20+numberoflines^2*40)
-			scorescore = scorescore + scoreadd
-			
-			lastscoreadd = scoreadd
-			scoreaddtimer = 0
-			
-			--Level
-			linescleared = linescleared + numberoflines
-			
-			if math.floor(linescleared/10) > levelscore then
-				levelscore = levelscore + 1
-				difficulty_speed = 100 + levelscore*7
-				newlevelbeep = true
-			end
-			
-			--Draw the screen before removing lines.
-			love.graphics.clear()
-			drawscreen()
-			love.graphics.present( )
-			
-			for i = 1, 18 do
-				if linesremoved[i] then
-					removeline(i)
-				end
-			end
-		else
-			love.audio.stop(blockfall)
-			love.audio.play(blockfall)
-		end
+	if lastcutoff then
+		table.insert(coords, lastcutoff-1,rightx)
+		table.insert(coords, lastcutoff,y)
 		
-		return removedlines
+		table.insert(coords, lastcutoff-1,leftx)
+		table.insert(coords, lastcutoff,y)
+	end
+end
+
+function cutpointsbelow(coords, y, leftx, rightx) --removes the polygon's points below y, closing it along y between leftx and rightx
+	local coi=2
+	local lastcutoff = nil
+	while coi <= #coords do
+		if coords[coi] >= y then
+			table.remove(coords, coi)
+			table.remove(coords, coi-1)
+			lastcutoff = coi
+			coi=0
+		end
+		coi=coi+2
+	end
+	
+	if lastcutoff then
+		table.insert(coords, lastcutoff-1,leftx)
+		table.insert(coords, lastcutoff,y)
+		
+		table.insert(coords, lastcutoff-1,rightx)
+		table.insert(coords, lastcutoff,y)
+	end
+end
+
+function clearfulllines() --scores and removes every line that is full enough. returns whether any were
+	local numberoflines = 0
+	linesremoved = {}
+	
+	for i = 1, 18 do
+		if linearea[i] > 1024*linecleartreshold then
+			if numberoflines == 0 then
+				cuttingtimer = 0
+				snapshotpieces()
+			end
+			
+			linesremoved[i] = true
+			numberoflines = numberoflines + 1
+			linesscore = linesscore + 1
+		end
+	end
+	
+	if numberoflines == 0 then
+		love.audio.stop(blockfall)
+		love.audio.play(blockfall)
+		return false
+	end
+	
+	if numberoflines >= 4 then
+		love.audio.stop(fourlineclear)
+		love.audio.play(fourlineclear)
+	else
+		love.audio.stop(lineclear)
+		love.audio.play(lineclear)
+	end
+	
+	scorelines(numberoflines)
+	
+	--Draw the screen before removing lines.
+	love.graphics.clear()
+	drawscreen()
+	love.graphics.present( )
+	
+	for i = 1, 18 do
+		if linesremoved[i] then
+			removeline(i)
+		end
+	end
+	return true
+end
+
+function snapshotpieces() --saves position, angle, kind and image of each piece so they can be drawn unchanged while the cleared lines blink
+	tetricutpos = {}
+	tetricutang = {}
+	tetricutkind = {}
+	tetricutimg = {}
+	
+	for i, piece in pairs(tetris) do
+		if piece then
+			table.insert(tetricutpos, piece.body:getX())
+			table.insert(tetricutpos, piece.body:getY())
+			table.insert(tetricutang, piece.body:getAngle())
+			table.insert(tetricutkind, piece.kind)
+			table.insert(tetricutimg, love.graphics.newImage(piece.imagedata))
+		end
+	end
+end
+
+function scorelines(numberoflines) --score depends on the number of lines and how full they were; also advances the level
+	local averagearea = 0
+	for i = 1, 18 do
+		if linesremoved[i] then
+			averagearea = averagearea + linearea[i]
+		end
+	end
+	averagearea = averagearea / numberoflines / 10240
+	
+	local scoreadd = math.ceil((numberoflines*3)^(averagearea^10)*20+numberoflines^2*40)
+	scorescore = scorescore + scoreadd
+	
+	lastscoreadd = scoreadd
+	scoreaddtimer = 0
+	
+	linescleared = linescleared + numberoflines
+	
+	if math.floor(linescleared/10) > levelscore then
+		levelscore = levelscore + 1
+		difficulty_speed = 100 + levelscore*7
+		newlevelbeep = true
 	end
 end
 
