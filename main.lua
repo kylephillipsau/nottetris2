@@ -90,7 +90,6 @@ function love.load()
 	linecleartreshold = 8.1 --in blocks
 	densityupdateinterval = 1/30 --in seconds
 	nextpiecerotspeed = 1 --rad per seconnd
-	minfps = 1/50 --dt doesn't go higher than this
 	scoreaddtime = 0.5
 	startdelaytime = 0
 	density = 0.1
@@ -203,7 +202,19 @@ function loadimages()
 	love.graphics.setFont(tetrisfont)
 end
 
+TIMESTEP = 1/60 --the game always advances in steps of this length, so physics behaves the same at any frame rate
+MAXSTEPS = 5 --after a long frame, catch up at most this many steps instead of trying to replay all of it
+timeaccumulator = 0
+
 function love.update(dt)
+	timeaccumulator = math.min(timeaccumulator + dt, TIMESTEP*MAXSTEPS)
+	while timeaccumulator >= TIMESTEP do
+		timeaccumulator = timeaccumulator - TIMESTEP
+		step(TIMESTEP)
+	end
+end
+
+function step(dt)
 	if gamestate == "boot" then
 		startdelaytime = startdelaytime + dt
 		if startdelaytime >= startdelay then
@@ -214,10 +225,6 @@ function love.update(dt)
 	if skipupdate then
 		skipupdate = false
 		return
-	end
-	
-	if cuttingtimer ~= 0 then
-		dt = math.min(dt, minfps)
 	end
 	
 	local screen = screens[gamestate]
