@@ -324,44 +324,44 @@ end
 
 sfx = {} --audio sources by name
 
---every sound: name in sfx, file in sounds/, volume at full volume, looping. music[1..3] are the game themes.
+--every sound, loaded into sfx[name] from sounds/<file>.ogg. volume is at full volume setting.
+--music streams from disk; short effects are decoded once ("static") so they start without delay.
 sounds = {
-	{"music1", "themeA", 0.6, true},
-	{"music2", "themeB", 0.6, true},
-	{"music3", "themeC", 0.6, true},
-	{"musictitle", "titlemusic", 0.6, true},
-	{"musichighscore", "highscoremusic", 0.6, true},
-	{"musicrocket4", "rocket4", 0.6},
-	{"musicrocket1to3", "rocket1to3", 0.6},
-	{"musicresults", "resultsmusic", 1},
-	{"highscoreintro", "highscoreintro", 0.6},
-	{"musicoptions", "musicoptions", 1, true},
-	{"boot", "boot", 1},
-	{"blockfall", "blockfall", 1},
-	{"blockturn", "turn", 1},
-	{"blockmove", "move", 1},
-	{"lineclear", "lineclear", 1},
-	{"fourlineclear", "4lineclear", 1},
-	{"gameover1", "gameover1", 1},
-	{"gameover2", "gameover2", 1},
-	{"pausesound", "pause", 1},
-	{"highscorebeep", "highscorebeep", 1},
-	{"newlevel", "newlevel", 0.6},
+	{name = "music1", file = "themeA", volume = 0.6, type = "stream", looping = true},
+	{name = "music2", file = "themeB", volume = 0.6, type = "stream", looping = true},
+	{name = "music3", file = "themeC", volume = 0.6, type = "stream", looping = true},
+	{name = "musictitle", file = "titlemusic", volume = 0.6, type = "stream", looping = true},
+	{name = "musichighscore", file = "highscoremusic", volume = 0.6, type = "stream", looping = true},
+	{name = "musicrocket4", file = "rocket4", volume = 0.6, type = "stream"},
+	{name = "musicrocket1to3", file = "rocket1to3", volume = 0.6, type = "stream"},
+	{name = "musicresults", file = "resultsmusic", volume = 1, type = "stream"},
+	{name = "highscoreintro", file = "highscoreintro", volume = 0.6, type = "stream"},
+	{name = "musicoptions", file = "musicoptions", volume = 1, type = "stream", looping = true},
+	{name = "boot", file = "boot", volume = 1, type = "static"},
+	{name = "blockfall", file = "blockfall", volume = 1, type = "static"},
+	{name = "blockturn", file = "turn", volume = 1, type = "static"},
+	{name = "blockmove", file = "move", volume = 1, type = "static"},
+	{name = "lineclear", file = "lineclear", volume = 1, type = "static"},
+	{name = "fourlineclear", file = "4lineclear", volume = 1, type = "static"},
+	{name = "gameover1", file = "gameover1", volume = 1, type = "static"},
+	{name = "gameover2", file = "gameover2", volume = 1, type = "static"},
+	{name = "pausesound", file = "pause", volume = 1, type = "static"},
+	{name = "highscorebeep", file = "highscorebeep", volume = 1, type = "static"},
+	{name = "newlevel", file = "newlevel", volume = 0.6, type = "static"},
 }
 
 function loadsounds()
 	for i, sound in ipairs(sounds) do
-		local name, file, vol, looping = unpack(sound)
-		local source = love.audio.newSource("sounds/"..file..".ogg", name == "boot" and "static" or "stream")
-		source:setLooping(looping == true)
-		sfx[name] = source
+		local source = love.audio.newSource("sounds/"..sound.file..".ogg", sound.type)
+		source:setLooping(sound.looping == true)
+		sfx[sound.name] = source
 	end
 	music = {sfx.music1, sfx.music2, sfx.music3}
 end
 
 function changevolume(i)
 	for j, sound in ipairs(sounds) do
-		sfx[sound[1]]:setVolume(sound[3]*i)
+		sfx[sound.name]:setVolume(sound.volume*i)
 	end
 end
 function loadoptions()
