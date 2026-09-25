@@ -104,8 +104,8 @@ function singleplayer_keypressed(key)
 			if musicno < 4 then
 				music[musicno]:pause()
 			end
-			love.audio.stop(pausesound)
-			love.audio.play(pausesound)
+			love.audio.stop(sfx.pausesound)
+			love.audio.play(sfx.pausesound)
 		else
 			if musicno < 4 then
 				music[musicno]:play()
@@ -123,11 +123,11 @@ function singleplayer_keypressed(key)
 			--	tetris[1].body:setAngularVelocity(0)
 			--end
 			if controls.check("left", key) or controls.check("right", key) then
-				love.audio.stop(blockmove)
-				love.audio.play(blockmove)
+				love.audio.stop(sfx.blockmove)
+				love.audio.play(sfx.blockmove)
 			elseif controls.check("rotateleft", key) or controls.check("rotateright", key) then
-				love.audio.stop(blockturn)
-				love.audio.play(blockturn)
+				love.audio.stop(sfx.blockturn)
+				love.audio.play(sfx.blockturn)
 			end
 		end
 	end

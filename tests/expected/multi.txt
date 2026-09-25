@@ -4,3 +4,5 @@
 c9b9e61e410728c394af289b14b4f46f  m04_mid.png
 f62a25b713ebb39cde51da511692431f  m05_results.png
 9a6314b41c2cec7b09a15aabb0e42907  m06_back.png
+e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
+80c293503c1d6f537142fe54cbbafe75  options.txt

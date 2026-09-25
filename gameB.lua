@@ -16,6 +16,7 @@ function gameB_load()
 	
 	tetris = {}
 	
+	local wallbodies, wallshapes
 	wallbodies, wallshapes, wallfixtures = newwalls(world, {
 		{points = {0,-64, 0,672, 32,672, 32,-64}, data = "left", friction = 0.00001},
 		{points = {352,-64, 352,672, 384,672, 384,-64}, data = "right", friction = 0.00001},
@@ -53,13 +54,6 @@ function createtetriB(i, uniqueid, x, y)
 end
 
 function gameB_draw()
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor(fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale)
-	end
 	
 	--background--
 	love.graphics.draw(gamebackground, 0, 0, 0, scale)
@@ -88,13 +82,6 @@ function gameB_draw()
 
 	love.graphics.setColor(1, 1, 1)
 	
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(-fullscreenoffsetX, -fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor()
-	end
 	
 end
 	
@@ -152,8 +139,8 @@ function endblockB()
 		if musicno < 4 then
 			love.audio.stop(music[musicno])
 		end
-		love.audio.stop(gameover1)
-		love.audio.play(gameover1)
+		love.audio.stop(sfx.gameover1)
+		love.audio.play(sfx.gameover1)
 
 		wallfixtures[2]:destroy()
 		wallfixtures[2] = nil
@@ -169,8 +156,8 @@ function endblockB()
 		linesscore = linesscore + 1
 		scorescore = linesscore * 100
 		
-		love.audio.stop(blockfall)
-		love.audio.play(blockfall)
+		love.audio.stop(sfx.blockfall)
+		love.audio.play(sfx.blockfall)
 		
 		newblock = true
 	end

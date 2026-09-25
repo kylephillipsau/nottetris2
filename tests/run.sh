@@ -1,5 +1,5 @@
 #!/bin/bash
-# Runs playtest scenarios headless and compares screenshots to a baseline.
+# Runs playtest scenarios headless and compares screenshots, state dumps and saved files to a baseline.
 #   tests/run.sh [--update] [scenario...]
 # Requires love (11.x) and xvfb-run. Screenshots end up in tests/out/<scenario>/.
 set -u
@@ -26,8 +26,8 @@ run_one() {
 		> "$work/log.txt" 2>&1
 	local code=$?
 	mkdir -p "$work/shots"
-	cp "$work"/data/love/not_tetris_2/*.png "$work/shots/" 2>/dev/null
-	(cd "$work/shots" && md5sum *.png 2>/dev/null) > "$work/hashes.txt"
+	cp "$work"/data/love/not_tetris_2/*.png "$work"/data/love/not_tetris_2/*.txt "$work/shots/" 2>/dev/null
+	(cd "$work/shots" && md5sum *.png *.txt 2>/dev/null) > "$work/hashes.txt"
 	rm -rf "$work/game" "$work/data"
 	if [ $code -ne 0 ]; then
 		echo "FAIL $name (exit $code)"; grep -A12 "ERROR\|TIMEOUT" "$work/log.txt" | head -20

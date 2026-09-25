@@ -1,4 +1,4 @@
-screens = {} --gamestate -> {update, draw, keypressed, textinput}
+screens = {} --gamestate -> {update, draw, keypressed, textinput, viewport}
 
 function registerscreen(states, screen) --each screen file registers the gamestates it handles
 	for i, state in ipairs(states) do
@@ -38,61 +38,7 @@ function love.load()
 	
 	
 	--SOUND--
-	music = {}
-	
-	music[1] = love.audio.newSource( "sounds/themeA.ogg", "stream")
-	music[1]:setVolume( 0.6 )
-	music[1]:setLooping( true )
-	
-	music[2] = love.audio.newSource( "sounds/themeB.ogg", "stream")
-	music[2]:setVolume( 0.6 )
-	music[2]:setLooping( true )
-	
-	music[3] = love.audio.newSource( "sounds/themeC.ogg", "stream")
-	music[3]:setVolume( 0.6 )
-	music[3]:setLooping( true )
-	
-	musictitle = love.audio.newSource( "sounds/titlemusic.ogg", "stream")
-	musictitle:setVolume( 0.6 )
-	musictitle:setLooping( true )
-	
-	musichighscore = love.audio.newSource( "sounds/highscoremusic.ogg", "stream")
-	musichighscore:setVolume( 0.6 )
-	musichighscore:setLooping( true )
-	
-	musicrocket4 = love.audio.newSource( "sounds/rocket4.ogg", "stream")
-	musicrocket4:setVolume( 0.6 )
-	musicrocket4:setLooping( false )
-	
-	musicrocket1to3 = love.audio.newSource( "sounds/rocket1to3.ogg", "stream")
-	musicrocket1to3:setVolume( 0.6 )
-	musicrocket1to3:setLooping( false )
-	
-	musicresults = love.audio.newSource( "sounds/resultsmusic.ogg", "stream")
-	musicresults:setVolume( 1 )
-	musicresults:setLooping( false )
-	
-	highscoreintro = love.audio.newSource( "sounds/highscoreintro.ogg", "stream")
-	highscoreintro:setVolume( 0.6 )
-	highscoreintro:setLooping( false )
-	
-	musicoptions = love.audio.newSource( "sounds/musicoptions.ogg", "stream")
-	musicoptions:setVolume( 1 )
-	musicoptions:setLooping( true )
-	
-	boot = love.audio.newSource( "sounds/boot.ogg", "static")
-	blockfall = love.audio.newSource( "sounds/blockfall.ogg", "stream")
-	blockturn = love.audio.newSource( "sounds/turn.ogg", "stream")
-	blockmove = love.audio.newSource( "sounds/move.ogg", "stream")
-	lineclear = love.audio.newSource( "sounds/lineclear.ogg", "stream")
-	fourlineclear = love.audio.newSource( "sounds/4lineclear.ogg", "stream")
-	gameover1 = love.audio.newSource( "sounds/gameover1.ogg", "stream")
-	gameover2 = love.audio.newSource( "sounds/gameover2.ogg", "stream")
-	pausesound = love.audio.newSource( "sounds/pause.ogg", "stream")
-	highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "stream")
-	newlevel = love.audio.newSource( "sounds/newlevel.ogg", "stream")
-	newlevel:setVolume( 0.6 )
-	
+	loadsounds()
 	changevolume(volume)
 	
 	--IMAGES THAT WON'T CHANGE HUE:
@@ -126,7 +72,6 @@ function love.load()
 	p2wins = 0
 
 	skipupdate = true
-	soundenabled = true
 	startdelay = 1
 	logoduration = 1.5
 	logodelay = 1
@@ -175,7 +120,6 @@ function love.load()
 	piececenterpreview[7] = {13, 9}
 	
 	loadhighscores()
-	loadconfig()
 	
 	loadimages()
 	
@@ -254,7 +198,7 @@ function loadimages()
 	end
 	
 	--font--
-	tetrisfont = newTintedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
+	local tetrisfont = newTintedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
 	whitefont = newTintedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
 	love.graphics.setFont(tetrisfont)
 end
@@ -283,10 +227,26 @@ function love.update(dt)
 end
 
 function love.draw()
+	drawscreen()
+end
+
+function drawscreen() --draws the current screen, centred and clipped to its playfield in fullscreen
 	local screen = screens[gamestate]
-	if screen and screen.draw then
-		screen.draw()
+	if not (screen and screen.draw) then
+		return
 	end
+	love.graphics.push("all")
+	if fullscreen then
+		local x, y, w, h = (screen.viewport or singleplayerviewport)()
+		love.graphics.translate(x, y)
+		love.graphics.setScissor(x, y, w, h)
+	end
+	screen.draw()
+	love.graphics.pop()
+end
+
+function singleplayerviewport() --screen area of the 160x144 playfield: x, y, width, height
+	return fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale
 end
 
 function printrightaligned(value, x, y, s) --prints value so that its last character starts at x, y (unscaled pixels; s defaults to scale)
@@ -355,57 +315,48 @@ function scaleImagedata(imagedata, i)
 	return scaled
 end
 
+sfx = {} --audio sources by name
+
+--every sound: name in sfx, file in sounds/, volume at full volume, looping. music[1..3] are the game themes.
+sounds = {
+	{"music1", "themeA", 0.6, true},
+	{"music2", "themeB", 0.6, true},
+	{"music3", "themeC", 0.6, true},
+	{"musictitle", "titlemusic", 0.6, true},
+	{"musichighscore", "highscoremusic", 0.6, true},
+	{"musicrocket4", "rocket4", 0.6},
+	{"musicrocket1to3", "rocket1to3", 0.6},
+	{"musicresults", "resultsmusic", 1},
+	{"highscoreintro", "highscoreintro", 0.6},
+	{"musicoptions", "musicoptions", 1, true},
+	{"boot", "boot", 1},
+	{"blockfall", "blockfall", 1},
+	{"blockturn", "turn", 1},
+	{"blockmove", "move", 1},
+	{"lineclear", "lineclear", 1},
+	{"fourlineclear", "4lineclear", 1},
+	{"gameover1", "gameover1", 1},
+	{"gameover2", "gameover2", 1},
+	{"pausesound", "pause", 1},
+	{"highscorebeep", "highscorebeep", 1},
+	{"newlevel", "newlevel", 0.6},
+}
+
+function loadsounds()
+	for i, sound in ipairs(sounds) do
+		local name, file, vol, looping = unpack(sound)
+		local source = love.audio.newSource("sounds/"..file..".ogg", name == "boot" and "static" or "stream")
+		source:setLooping(looping == true)
+		sfx[name] = source
+	end
+	music = {sfx.music1, sfx.music2, sfx.music3}
+end
+
 function changevolume(i)
-	music[1]:setVolume( 0.6*i )
-	music[2]:setVolume( 0.6*i )
-	music[3]:setVolume( 0.6*i )
-	musictitle:setVolume( 0.6*i )
-	musichighscore:setVolume( 0.6*i )
-	musicrocket4:setVolume( 0.6*i )
-	musicrocket1to3:setVolume( 0.6*i )
-	musicresults:setVolume( i )
-	highscoreintro:setVolume( 0.6*i )
-	musicoptions:setVolume( i )
-	boot:setVolume( i )
-	blockfall:setVolume( i )
-	blockturn:setVolume( i )
-	blockmove:setVolume( i )
-	lineclear:setVolume( i )
-	fourlineclear:setVolume( i )
-	gameover1:setVolume( i )
-	gameover2:setVolume( i )
-	pausesound:setVolume( i )
-	highscorebeep:setVolume( i )
-	newlevel:setVolume( 0.6*i )
+	for j, sound in ipairs(sounds) do
+		sfx[sound[1]]:setVolume(sound[3]*i)
+	end
 end
-
-function loadconfig()
-	--standard controls
-	--[[controls = {}
-	controls["left"] = {"left"}
-	controls["right"] = {"right"}
-	controls["down"] = {"down"}
-	controls["rotateleft"] = {"y", "z", "w"}
-	controls["rotateright"] = {"x"}
-	
-	controls["p1left"] = {"a"}
-	controls["p1right"] = {"d"}
-	controls["p1down"] = {"s"}
-	controls["p1rotateleft"] = {"g"}
-	controls["p1rotateright"] = {"h"}
-	
-	controls["p2left"] = {"left"}
-	controls["p2right"] = {"right"}
-	controls["p2down"] = {"down"}
-	controls["p2rotateleft"] = {"kp1"}
-	controls["p2rotateright"] = {"kp2"}
-	
-	local keys = {"left", "right", "down", "rotateleft", "rotateright", "p1left", "p1right", "p1down", "p1rotateleft", "p1rotateright", "p2left", "p2right", "p2down", "p2rotateleft", "p2rotateright"}
-	
-	
-	print(unpack(controls["left"]))--]]
-end
-
 function loadoptions()
 	if love.filesystem.getInfo("options.txt") then
 		local s = love.filesystem.read("options.txt")
@@ -637,67 +588,6 @@ function getrainbowcolor(i)
 	return {r, g, b}
 end
 
-
-function gamemenu_navigate(key) --moves the cursor on the game type/music grid shared by both game menus
-	if controls.check("left", key) then
-		if selection == 2 or selection == 4 or selection == 6 then
-			selection = selection - 1
-			selectblink = true
-			oldtime = love.timer.getTime()
-		end
-	elseif controls.check("right", key) then
-		if selection == 1 or selection == 3 or selection == 5 then
-			selection = selection + 1
-			selectblink = true
-			oldtime = love.timer.getTime()
-		end
-	elseif controls.check("up", key) then
-		if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
-			selection = selection - 2
-			selectblink = true
-			oldtime = love.timer.getTime()
-			if selection < 3 then
-				selection = gameno
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
-		elseif selection == 1 or selection == 2 then
-			selection = musicno + 2
-			selectblink = false
-			oldtime = love.timer.getTime()
-		end
-	elseif controls.check("down", key) then
-		if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
-			selection = selection + 2
-			selectblink = true
-			oldtime = love.timer.getTime()
-			if selection > 2 and selection < 5 then
-				selection = musicno + 2
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
-		elseif selection == 5 or selection == 6 then
-			selection = gameno
-			selectblink = false
-			oldtime = love.timer.getTime()
-		end
-	end
-end
-
-function gamemenu_select(oldmusicno) --applies the game type or music under the cursor
-	if selection > 2 then
-		musicno = selection - 2
-		if oldmusicno ~= musicno and oldmusicno ~= 4 then
-			love.audio.stop(music[oldmusicno])
-		end
-		if musicno < 4 then
-			love.audio.play(music[musicno])
-		end
-	else
-		gameno = selection
-		loadhighscores()
-	end
-end
 
 function love.keypressed( key, scancode, isrepeat )
 	local screen = screens[gamestate]

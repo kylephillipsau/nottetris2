@@ -1,17 +1,10 @@
 function failed_load()
 	gamestate = "failed"
 	tetris = {} --clear all pieces
-	love.audio.play(gameover2)
+	love.audio.play(sfx.gameover2)
 end
 
 function failed_draw()
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor(fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale)
-	end
 	
 	if gameno == 1 then
 		love.graphics.draw(gamebackgroundcutoff, 0, 0, 0, scale)
@@ -26,13 +19,6 @@ function failed_draw()
 	-----------------------------------------------
 	
 	
-	--FULLSCREEN OFFSET
-	if fullscreen then
-		love.graphics.translate(-fullscreenoffsetX, -fullscreenoffsetY)
-		
-		--scissor
-		love.graphics.setScissor()
-	end
 end
 
 function failed_checkhighscores()
@@ -55,7 +41,7 @@ function failed_checkhighscores()
 			highscorename[i] = ""
 			highscore[i] = scorescore
 			cursorblink = true
-			love.audio.play(highscoreintro)
+			love.audio.play(sfx.highscoreintro)
 			highscoremusicstart = love.timer.getTime()
 			musicchanged = false
 			gamestate = "highscoreentry"
@@ -73,7 +59,7 @@ end
 function failed_keypressed(key)
 	if gamestate == "failed" then
 	if controls.check("return", key) or controls.check("escape", key) then 
-		love.audio.stop(gameover2)
+		love.audio.stop(sfx.gameover2)
 		rocket_load()
 	end
 	end

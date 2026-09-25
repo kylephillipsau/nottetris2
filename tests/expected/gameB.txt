@@ -4,3 +4,6 @@ bcb0509badc101fa4e7ac62ed2c58ffb  b03_mid.png
 97e529b814918818ffe508ad73a83f89  b04_failed.png
 f4c85126bf708012296ae5d9bd10a37e  b05_after.png
 ea092920244003c0da16921c3bf3e1cb  b06_end.png
+e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
+fb7d0326672488b8d5bd3cffedc745ba  highscoresB.txt
+80c293503c1d6f537142fe54cbbafe75  options.txt
