@@ -72,7 +72,6 @@ function love.load()
 	p2wins = 0
 
 	skipupdate = true
-	soundenabled = true
 	startdelay = 1
 	logoduration = 1.5
 	logodelay = 1
@@ -587,67 +586,6 @@ function getrainbowcolor(i)
 	return {r, g, b}
 end
 
-
-function gamemenu_navigate(key) --moves the cursor on the game type/music grid shared by both game menus
-	if controls.check("left", key) then
-		if selection == 2 or selection == 4 or selection == 6 then
-			selection = selection - 1
-			selectblink = true
-			oldtime = love.timer.getTime()
-		end
-	elseif controls.check("right", key) then
-		if selection == 1 or selection == 3 or selection == 5 then
-			selection = selection + 1
-			selectblink = true
-			oldtime = love.timer.getTime()
-		end
-	elseif controls.check("up", key) then
-		if selection == 3 or selection == 4 or selection == 5 or selection == 6 then
-			selection = selection - 2
-			selectblink = true
-			oldtime = love.timer.getTime()
-			if selection < 3 then
-				selection = gameno
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
-		elseif selection == 1 or selection == 2 then
-			selection = musicno + 2
-			selectblink = false
-			oldtime = love.timer.getTime()
-		end
-	elseif controls.check("down", key) then
-		if selection == 1 or selection == 2 or selection == 3 or selection == 4 then
-			selection = selection + 2
-			selectblink = true
-			oldtime = love.timer.getTime()
-			if selection > 2 and selection < 5 then
-				selection = musicno + 2
-				selectblink = false
-				oldtime = love.timer.getTime()
-			end
-		elseif selection == 5 or selection == 6 then
-			selection = gameno
-			selectblink = false
-			oldtime = love.timer.getTime()
-		end
-	end
-end
-
-function gamemenu_select(oldmusicno) --applies the game type or music under the cursor
-	if selection > 2 then
-		musicno = selection - 2
-		if oldmusicno ~= musicno and oldmusicno ~= 4 then
-			love.audio.stop(music[oldmusicno])
-		end
-		if musicno < 4 then
-			love.audio.play(music[musicno])
-		end
-	else
-		gameno = selection
-		loadhighscores()
-	end
-end
 
 function love.keypressed( key, scancode, isrepeat )
 	local screen = screens[gamestate]
