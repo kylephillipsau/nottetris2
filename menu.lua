@@ -36,7 +36,7 @@ function skiptotitle(key) --enter skips the intro
 	if controls.check("return", key) then
 		gamestate = "title"
 		love.graphics.setBackgroundColor( 0, 0, 0)
-		love.audio.play(musictitle)
+		love.audio.play(sfx.musictitle)
 		oldtime = love.timer.getTime()
 	end
 end
@@ -47,8 +47,8 @@ function logo_update(dt)
 	logotime = logotime + dt
 	
 	if logotime >= logoduration and bootsoundplayed == false then
-		love.audio.stop(boot)
-		love.audio.play(boot)
+		love.audio.stop(sfx.boot)
+		love.audio.play(sfx.boot)
 		
 		bootsoundplayed = true
 	end
@@ -71,7 +71,7 @@ function credits_update(dt)
 	if love.timer.getTime() - oldtime > creditsdelay then
 		gamestate = "title"
 		love.graphics.setBackgroundColor( 0, 0, 0)
-		love.audio.play(musictitle)
+		love.audio.play(sfx.musictitle)
 	end
 end
 
@@ -93,7 +93,7 @@ end
 function title_keypressed(key)
 	if controls.check("return", key) then
 		if playerselection ~= 3 then
-			love.audio.stop(musictitle)
+			love.audio.stop(sfx.musictitle)
 			if musicno < 4 then
 				love.audio.play(music[musicno])
 			end
@@ -104,8 +104,8 @@ function title_keypressed(key)
 			gamestate = "multimenu"
 		else
 			gamestate = "options"
-			love.audio.stop(musictitle)
-			love.audio.play(musicoptions)
+			love.audio.stop(sfx.musictitle)
+			love.audio.play(sfx.musicoptions)
 			optionsselection = 1
 		end
 	elseif controls.check("escape", key) then
@@ -231,8 +231,8 @@ function menu_keypressed(key)
 			love.audio.stop(music[musicno])
 		end
 		gamestate = "title"
-		love.audio.stop(musictitle)
-		love.audio.play(musictitle)
+		love.audio.stop(sfx.musictitle)
+		love.audio.play(sfx.musictitle)
 	elseif key == "backspace" then
 		newhighscores()
 	elseif controls.check("return", key) then
@@ -265,8 +265,8 @@ function multimenu_keypressed(key)
 			love.audio.stop(music[musicno])
 		end
 		gamestate = "title"
-		love.audio.stop(musictitle)
-		love.audio.play(musictitle)
+		love.audio.stop(sfx.musictitle)
+		love.audio.play(sfx.musictitle)
 	elseif controls.check("return", key) then
 		gameBmulti_load()
 	else
@@ -286,8 +286,8 @@ function highscoreentry_update(dt)
 	if love.timer.getTime() - highscoremusicstart > 1.2 then
 		if musicchanged == false then
 			musicchanged = true
-			love.audio.stop(highscoreintro)
-			love.audio.play(musichighscore)
+			love.audio.stop(sfx.highscoreintro)
+			love.audio.play(sfx.musichighscore)
 		end
 	end
 end
@@ -314,8 +314,8 @@ function highscoreentry_textinput(text)
 		if highscorename[highscoreno]:len() < 6 then
 			cursorblink = true
 			highscorename[highscoreno] = highscorename[highscoreno] .. text
-			love.audio.stop(highscorebeep)
-			love.audio.play(highscorebeep)
+			love.audio.stop(sfx.highscorebeep)
+			love.audio.play(sfx.highscorebeep)
 		end
 	end
 end
@@ -325,9 +325,9 @@ function highscoreentry_keypressed(key)
 		gamestate = "menu"
 		savehighscores()
 		if musicchanged == true then
-			love.audio.stop(musichighscore)
+			love.audio.stop(sfx.musichighscore)
 		else
-			love.audio.stop(highscoreintro)
+			love.audio.stop(sfx.highscoreintro)
 		end
 		if musicno < 4 then
 			love.audio.play(music[musicno])
@@ -399,9 +399,9 @@ end
 
 function options_keypressed(key)
 	if controls.check("escape", key) then
-		love.audio.stop(musicoptions)
-		love.audio.stop(musictitle)
-		love.audio.play(musictitle)
+		love.audio.stop(sfx.musicoptions)
+		love.audio.stop(sfx.musictitle)
+		love.audio.play(sfx.musictitle)
 		saveoptions()
 		loadimages()
 		gamestate = "title"

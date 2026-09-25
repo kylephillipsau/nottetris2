@@ -178,8 +178,8 @@ function gameA_update(dt)
 			scoreaddtimer = 0
 		
 			if newlevelbeep then
-				love.audio.stop(newlevel)
-				love.audio.play(newlevel)
+				love.audio.stop(sfx.newlevel)
+				love.audio.play(sfx.newlevel)
 				newlevelbeep = false
 			end
 		end
@@ -634,17 +634,17 @@ function clearfulllines() --scores and removes every line that is full enough. r
 	end
 	
 	if numberoflines == 0 then
-		love.audio.stop(blockfall)
-		love.audio.play(blockfall)
+		love.audio.stop(sfx.blockfall)
+		love.audio.play(sfx.blockfall)
 		return false
 	end
 	
 	if numberoflines >= 4 then
-		love.audio.stop(fourlineclear)
-		love.audio.play(fourlineclear)
+		love.audio.stop(sfx.fourlineclear)
+		love.audio.play(sfx.fourlineclear)
 	else
-		love.audio.stop(lineclear)
-		love.audio.play(lineclear)
+		love.audio.stop(sfx.lineclear)
+		love.audio.play(sfx.lineclear)
 	end
 	
 	scorelines(numberoflines)
@@ -859,8 +859,8 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 					if musicno < 4 then
 						love.audio.stop(music[musicno])
 					end
-					love.audio.stop(gameover1)
-					love.audio.play(gameover1)
+					love.audio.stop(sfx.gameover1)
+					love.audio.play(sfx.gameover1)
 
 					if wallfixtures[2] then
 						wallfixtures[2]:destroy()

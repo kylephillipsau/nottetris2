@@ -315,7 +315,9 @@ function scaleImagedata(imagedata, i)
 	return scaled
 end
 
---every sound: global name, file in sounds/, volume at full volume, looping. music[1..3] are the game themes.
+sfx = {} --audio sources by name
+
+--every sound: name in sfx, file in sounds/, volume at full volume, looping. music[1..3] are the game themes.
 sounds = {
 	{"music1", "themeA", 0.6, true},
 	{"music2", "themeB", 0.6, true},
@@ -345,14 +347,14 @@ function loadsounds()
 		local name, file, vol, looping = unpack(sound)
 		local source = love.audio.newSource("sounds/"..file..".ogg", name == "boot" and "static" or "stream")
 		source:setLooping(looping == true)
-		_G[name] = source
+		sfx[name] = source
 	end
-	music = {music1, music2, music3}
+	music = {sfx.music1, sfx.music2, sfx.music3}
 end
 
 function changevolume(i)
 	for j, sound in ipairs(sounds) do
-		_G[sound[1]]:setVolume(sound[3]*i)
+		sfx[sound[1]]:setVolume(sound[3]*i)
 	end
 end
 function loadoptions()

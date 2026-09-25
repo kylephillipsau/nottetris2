@@ -139,8 +139,8 @@ function endblockB()
 		if musicno < 4 then
 			love.audio.stop(music[musicno])
 		end
-		love.audio.stop(gameover1)
-		love.audio.play(gameover1)
+		love.audio.stop(sfx.gameover1)
+		love.audio.play(sfx.gameover1)
 
 		wallfixtures[2]:destroy()
 		wallfixtures[2] = nil
@@ -156,8 +156,8 @@ function endblockB()
 		linesscore = linesscore + 1
 		scorescore = linesscore * 100
 		
-		love.audio.stop(blockfall)
-		love.audio.play(blockfall)
+		love.audio.stop(sfx.blockfall)
+		love.audio.play(sfx.blockfall)
 		
 		newblock = true
 	end

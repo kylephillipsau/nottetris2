@@ -242,16 +242,16 @@ function gameBmulti_update(dt)
 			gamestarted = true
 		elseif newtime - starttimer > 2 and beeped[3] == false then
 			beeped[3] = true
-			love.audio.stop(highscorebeep)
-			love.audio.play(highscorebeep)
+			love.audio.stop(sfx.highscorebeep)
+			love.audio.play(sfx.highscorebeep)
 		elseif newtime - starttimer > 1 and beeped[2] == false then
 			beeped[2] = true
-			love.audio.stop(highscorebeep)
-			love.audio.play(highscorebeep)
+			love.audio.stop(sfx.highscorebeep)
+			love.audio.play(sfx.highscorebeep)
 		elseif newtime - starttimer > 0 and beeped[1] == false then
 			beeped[1] = true
-			love.audio.stop(highscorebeep)
-			love.audio.play(highscorebeep)
+			love.audio.stop(sfx.highscorebeep)
+			love.audio.play(sfx.highscorebeep)
 		end
 		
 	elseif gamestate == "gameBmulti" then
@@ -269,8 +269,8 @@ function gameBmulti_update(dt)
 			wallfxturesp1[2]:destroy()
 			wallfxturesp2[2]:destroy()
 
-			love.audio.stop(gameover2)
-			love.audio.play(gameover2)
+			love.audio.stop(sfx.gameover2)
+			love.audio.play(sfx.gameover2)
 		end
 	elseif gamestate == "failedBmulti" then
 		local clearcheck = true
@@ -287,7 +287,7 @@ function gameBmulti_update(dt)
 			jumptimer = love.timer.getTime()
 			crytimer = love.timer.getTime()
 			
-			love.audio.play(musicresults)
+			love.audio.play(sfx.musicresults)
 
 			local resultsfloorbody = love.physics.newBody(world, 32, -64, "static")
 			local resultsfloorshape = love.physics.newPolygonShape(196,448, 196,480, 836,480, 836,448)
@@ -490,8 +490,8 @@ function endblockp1()
 			endgame()
 		end
 	else --P1 didn't hit the top yet
-		love.audio.stop(blockfall)
-		love.audio.play(blockfall)
+		love.audio.stop(sfx.blockfall)
+		love.audio.play(sfx.blockfall)
 		linesscorep1 = linesscorep1 + 1
 		scorescorep1 = linesscorep1 * 100
 		game_addTetriBmultip1()
@@ -513,8 +513,8 @@ function endblockp2()
 			endgame()
 		end
 	else --P2 didn't hit the top yet
-		love.audio.stop(blockfall)
-		love.audio.play(blockfall)
+		love.audio.stop(sfx.blockfall)
+		love.audio.play(sfx.blockfall)
 		linesscorep2 = linesscorep2 + 1
 		scorescorep2 = linesscorep2 * 100
 		game_addTetriBmultip2()
@@ -529,8 +529,8 @@ function endgame()
 		love.audio.stop(music[musicno])
 	end
 	
-	love.audio.stop(gameover1)
-	love.audio.play(gameover1)
+	love.audio.stop(sfx.gameover1)
+	love.audio.play(sfx.gameover1)
 	
 	if scorescorep1 > scorescorep2 then
 		p1wins = p1wins + 1
@@ -564,17 +564,17 @@ function gameBmulti_keypressed(key)
 		gamestate = "multimenu"
 	end
 	if controls.check("leftp1", key) or controls.check("rightp1", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
-		love.audio.stop(blockmove)
-		love.audio.play(blockmove)
+		love.audio.stop(sfx.blockmove)
+		love.audio.play(sfx.blockmove)
 	elseif controls.check("rotateleftp1", key) or controls.check("rotaterightp1", key) or controls.check("rotateleftp2", key) or controls.check("rotaterightp2", key) then
-		love.audio.stop(blockturn)
-		love.audio.play(blockturn)
+		love.audio.stop(sfx.blockturn)
+		love.audio.play(sfx.blockturn)
 	end
 	
 	elseif gamestate == "gameBmulti_results" then
 	if controls.check("return", key) or controls.check("escape", key) then
 		if musicno < 4 then
-			love.audio.stop(musicresults)
+			love.audio.stop(sfx.musicresults)
 			love.audio.play(music[musicno])
 		end
 		restorewindow()

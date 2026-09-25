@@ -15,11 +15,11 @@ function rocket_load()
 	for i = 4, 1, -1 do
 		if scorescore >= rocketscores[i] then
 			if i < 4 then
-				love.audio.stop(musicrocket1to3)
-				love.audio.play(musicrocket1to3)
+				love.audio.stop(sfx.musicrocket1to3)
+				love.audio.play(sfx.musicrocket1to3)
 			else
-				love.audio.stop(musicrocket4)
-				love.audio.play(musicrocket4)
+				love.audio.stop(sfx.musicrocket4)
+				love.audio.play(sfx.musicrocket4)
 			end
 			rockettimer = love.timer.getTime()
 			gamestate = "rocket"..tostring(i)
@@ -154,8 +154,8 @@ end
 function rocket_keypressed(key)
 	if string.sub(gamestate, 1, 6) == "rocket" then
 	if controls.check("return", key) then
-		love.audio.stop(musicrocket1to3)
-		love.audio.stop(musicrocket4)
+		love.audio.stop(sfx.musicrocket1to3)
+		love.audio.stop(sfx.musicrocket4)
 		failed_checkhighscores()
 	end
 	end
