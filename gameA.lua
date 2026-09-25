@@ -25,6 +25,7 @@ function gameA_load()
 
 	tetris = {} --pieces: {kind, body, shapes, fixtures, image, imagedata}. 1 is the falling piece
 	tetrishapescopy = {}
+	local wallbodies, wallshapes
 	wallbodies, wallshapes, wallfixtures = newwalls(world, {
 		{points = {-8,-64, -8,672, 24,672, 24,-64}, data = {"left"}, friction = 0.00001},
 		{points = {352,-64, 352,672, 384,672, 384,-64}, data = {"right"}, friction = 0.00001},

@@ -16,6 +16,7 @@ function gameB_load()
 	
 	tetris = {}
 	
+	local wallbodies, wallshapes
 	wallbodies, wallshapes, wallfixtures = newwalls(world, {
 		{points = {0,-64, 0,672, 32,672, 32,-64}, data = "left", friction = 0.00001},
 		{points = {352,-64, 352,672, 384,672, 384,-64}, data = "right", friction = 0.00001},
