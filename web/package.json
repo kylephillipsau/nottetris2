@@ -1,0 +1,14 @@
+{
+  "name": "nottetris2-web",
+  "private": true,
+  "description": "Builds Not Tetris 2 for the browser with love.js and serves it locally",
+  "scripts": {
+    "build": "node build.js",
+    "serve": "http-server build -p 8080 -c-1",
+    "start": "npm run build && npm run serve"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "love.js": "github:Davidobot/love.js#c4f04e185033a7c9fbefa9be3bec88c41a90421b"
+  }
+}

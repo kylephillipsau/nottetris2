@@ -1,3 +1,16 @@
+--This game was tuned for LÖVE 0.7, which differs from LÖVE 11 in two ways that change how it plays:
+--forces and torques were passed to Box2D as is (LÖVE 11 treats them as pixel units and divides them
+--by the meter, twice for torques), and new shapes had friction 0.5 and restitution 0.1 (LÖVE 11: 0.2 and 0).
+FORCESCALE = love.physics.getMeter()
+TORQUESCALE = love.physics.getMeter()^2
+
+function newfixture(body, shape, density) --a fixture with LÖVE 0.7's default friction and bounciness
+	local fixture = love.physics.newFixture(body, shape, density)
+	fixture:setFriction(0.5)
+	fixture:setRestitution(0.1)
+	return fixture
+end
+
 --Centres of the four 32x32 blocks of each tetromino, relative to the piece's body.
 pieceblocks = {
 	{{-48,  0}, {-16,  0}, { 16,  0}, { 48,  0}}, --I
@@ -14,7 +27,7 @@ function newpiece(world, kind, x, y, density) --creates a piece {kind, body, sha
 	piece.body = love.physics.newBody(world, x, y, "dynamic")
 	for i, block in ipairs(pieceblocks[kind]) do
 		piece.shapes[i] = love.physics.newRectangleShape(block[1], block[2], 32, 32)
-		piece.fixtures[i] = love.physics.newFixture(piece.body, piece.shapes[i], density)
+		piece.fixtures[i] = newfixture(piece.body, piece.shapes[i], density)
 	end
 	piece.body:setLinearDamping(0.5)
 	piece.body:setBullet(true)
@@ -37,22 +50,22 @@ function steerpiece(body, dt, player, maxfallspeed) --applies the rotate/move/dr
 	player = player or ""
 	if controls.isDown("rotateright"..player) then
 		if body:getAngularVelocity() < 3 then
-			body:applyTorque( 70 )
+			body:applyTorque( 70*TORQUESCALE )
 		end
 	end
 	if controls.isDown("rotateleft"..player) then
 		if body:getAngularVelocity() > -3 then
-			body:applyTorque( -70 )
+			body:applyTorque( -70*TORQUESCALE )
 		end
 	end
 
 	if controls.isDown("left"..player) then
 		local x, y = body:getWorldCenter()
-		body:applyForce( -70, 0, x, y )
+		body:applyForce( -70*FORCESCALE, 0, x, y )
 	end
 	if controls.isDown("right"..player) then
 		local x, y = body:getWorldCenter()
-		body:applyForce( 70, 0, x, y )
+		body:applyForce( 70*FORCESCALE, 0, x, y )
 	end
 
 	local x, y = body:getLinearVelocity()
@@ -61,7 +74,7 @@ function steerpiece(body, dt, player, maxfallspeed) --applies the rotate/move/dr
 			body:setLinearVelocity(x, maxfallspeed)
 		else
 			local cx, cy = body:getWorldCenter()
-			body:applyForce( 0, 20, cx, cy )
+			body:applyForce( 0, 20*FORCESCALE, cx, cy )
 		end
 	else
 		if y > difficulty_speed then
@@ -76,7 +89,7 @@ function newwalls(world, walls) --creates the static walls of a playfield. each 
 	local fixtures = {}
 	for i, wall in ipairs(walls) do
 		shapes[i-1] = love.physics.newPolygonShape(unpack(wall.points))
-		fixtures[i-1] = love.physics.newFixture(body, shapes[i-1])
+		fixtures[i-1] = newfixture(body, shapes[i-1])
 		fixtures[i-1]:setUserData(wall.data)
 		if wall.category then
 			fixtures[i-1]:setCategory(wall.category)

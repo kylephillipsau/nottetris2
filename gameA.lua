@@ -84,7 +84,7 @@ function gameA_draw()
 		--blinky lines
 		
 		local section = math.ceil(cuttingtimer/(lineclearduration/lineclearblinks))
-		if math.mod(section, 2) == 1 or cuttingtimer == 0 then
+		if section % 2 == 1 or cuttingtimer == 0 then
 
 			local rr, rg, rb = unpack(getrainbowcolor(hue))
 			local r = (145 + rr*64)/255
@@ -397,7 +397,7 @@ function addgroupfixtures(piece, index, shapes, shapegroups, group) --attaches c
 	for b, shape in pairs(shapes) do
 		if shapegroups[b] == group then
 			local newshape = love.physics.newPolygonShape(shape:getPoints())
-			local fixture = love.physics.newFixture(piece.body, newshape, 1)
+			local fixture = newfixture(piece.body, newshape, 1)
 			fixture:setUserData({index}) --set the fixture name for collision
 			piece.shapes[#piece.shapes+1] = newshape
 			piece.fixtures[#piece.fixtures+1] = fixture
@@ -648,11 +648,6 @@ function clearfulllines() --scores and removes every line that is full enough. r
 	end
 	
 	scorelines(numberoflines)
-	
-	--Draw the screen before removing lines.
-	love.graphics.clear()
-	drawscreen()
-	love.graphics.present( )
 	
 	for i = 1, 18 do
 		if linesremoved[i] then
