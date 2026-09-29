@@ -20,6 +20,8 @@ npm start
 
 Then open http://localhost:8080. `npm start` rebuilds the game from the current source and serves it; run `npm run build` and `npm run serve` separately if you prefer. The output in `web/build/` is a static site that any web server can host.
 
+The page around the game is `web/page/index.html`. Every push to `master` publishes the build to GitHub Pages (`.github/workflows/pages.yml`); enable it once under Settings > Pages > Source: GitHub Actions.
+
 ## Controls
 - Menus: arrow keys, Enter to select, Escape to go back
 - Single player: left/right to move, down to drop faster, Z/Y/W and X to rotate, Enter to pause

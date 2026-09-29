@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="Not Tetris 2 in your browser: Tetris, but the pieces are physics objects and lines are cut wherever they are full.">
+<meta name="theme-color" content="#15120f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' shape-rendering='crispEdges'%3E%3Cg fill='%23d0a890' stroke='%23000' stroke-width='3'%3E%3Crect x='2' y='10' width='14' height='14'/%3E%3Crect x='17' y='10' width='14' height='14'/%3E%3Crect x='32' y='10' width='14' height='14'/%3E%3Crect x='17' y='25' width='14' height='14'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+	:root {
+		--bg: #15120f;
+		--panel: #1f1a16;
+		--line: #362d26;
+		--text: #e9dccf;
+		--muted: #9a8a7c;
+		--tan: #d0a890;
+		--brown: #705848;
+		--controls-height: 88px;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; height: 100%; }
+	body {
+		background: var(--bg);
+		color: var(--text);
+		font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-height: 100svh;
+		padding: 16px;
+		gap: 12px;
+	}
+	a { color: var(--tan); text-decoration: none; }
+	a:hover { text-decoration: underline; }
+
+	/* the game: as large as fits, crisp pixels, letterboxed for both the 10:9 and the wider versus screen */
+	.stage {
+		position: relative;
+		width: 100%;
+		max-width: 1200px;
+		/* as tall as the window allows, but no taller than a 10:9 screen at full width needs */
+		height: min(calc(100svh - var(--controls-height) - 32px), calc((100vw - 32px) * 0.9));
+		min-height: 200px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	#canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		image-rendering: pixelated;
+		image-rendering: crisp-edges;
+		visibility: hidden;
+		outline: none;
+	}
+	.stage:fullscreen { max-width: none; height: 100vh; background: #000; }
+
+	/* start screen and loading, shaped like the game screen */
+	.overlay {
+		position: absolute;
+		inset: 0;
+		margin: auto;
+		aspect-ratio: 10 / 9;
+		max-width: 100%;
+		max-height: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 20px;
+		background: var(--panel);
+		border: 1px solid var(--line);
+		border-radius: 6px;
+		text-align: center;
+		padding: 24px;
+		cursor: default;
+	}
+	.overlay[hidden] { display: none; }
+	.overlay.ready { cursor: pointer; }
+	.wordmark {
+		margin: 0;
+		font: 700 clamp(28px, 6vw, 56px)/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--tan);
+		text-shadow: 3px 3px 0 #000;
+	}
+	.wordmark span { color: var(--text); }
+	.tagline { margin: -8px 0 0; color: var(--muted); }
+	.touch-note { display: none; margin: 0; color: var(--muted); font-size: 12px; }
+	@media (hover: none) and (pointer: coarse) { .touch-note { display: block; } }
+	.progress {
+		width: min(260px, 70%);
+		height: 8px;
+		background: #000;
+		border: 1px solid var(--brown);
+	}
+	.progress div { height: 100%; width: 0; background: var(--tan); transition: width 0.15s; }
+	.status { color: var(--muted); margin: 0; min-height: 1.4em; }
+	.play {
+		font: 600 16px/1 system-ui, sans-serif;
+		color: #000;
+		background: var(--tan);
+		border: 0;
+		border-radius: 4px;
+		padding: 12px 22px;
+		cursor: pointer;
+		box-shadow: 3px 3px 0 #000;
+	}
+	.play:hover { background: #dcb8a2; }
+	.play:focus-visible, .button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+	/* controls */
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 6px 18px;
+		max-width: 1200px;
+		color: var(--muted);
+	}
+	.controls ul { display: contents; list-style: none; }
+	.controls li { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+	kbd {
+		font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace;
+		color: var(--text);
+		background: var(--panel);
+		border: 1px solid var(--line);
+		border-bottom-width: 2px;
+		border-radius: 4px;
+		padding: 4px 6px;
+		min-width: 24px;
+		text-align: center;
+	}
+	.button {
+		font: inherit;
+		color: var(--text);
+		background: var(--panel);
+		border: 1px solid var(--line);
+		border-radius: 4px;
+		padding: 5px 10px;
+		cursor: pointer;
+	}
+	.button:hover { border-color: var(--brown); }
+	.versus { flex-basis: 100%; text-align: center; font-size: 12px; }
+	.versus span { white-space: nowrap; }
+	footer { font-size: 12px; color: #6f6258; }
+	footer a { color: var(--muted); }
+
+	@media (max-width: 600px) {
+		:root { --controls-height: 150px; }
+		body { padding: 12px 8px; }
+	}
+</style>
+</head>
+<body>
+	<main class="stage" id="stage">
+		<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+		<div class="overlay" id="overlay">
+			<h1 class="wordmark">Not Tetris <span>2</span></h1>
+			<p class="tagline">Tetris, but the pieces obey physics.</p>
+			<div class="progress" id="progress" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" hidden><div></div></div>
+			<button class="play" id="play" hidden>Play</button>
+			<p class="status" id="status">&nbsp;</p>
+			<p class="touch-note">Needs a keyboard.</p>
+		</div>
+	</main>
+
+	<section class="controls" aria-label="Controls">
+		<ul>
+			<li><kbd>←</kbd><kbd>→</kbd> move</li>
+			<li><kbd>↓</kbd> drop</li>
+			<li><kbd>Z</kbd><kbd>X</kbd> rotate</li>
+			<li><kbd>Enter</kbd> select / pause</li>
+			<li><kbd>Esc</kbd> back</li>
+		</ul>
+		<button class="button" id="fullscreen" type="button">Fullscreen</button>
+		<div class="versus">Versus: <span>player 1 <kbd>A</kbd><kbd>D</kbd><kbd>S</kbd> <kbd>G</kbd><kbd>H</kbd></span> · <span>player 2 <kbd>←</kbd><kbd>→</kbd><kbd>↓</kbd> numpad <kbd>1</kbd><kbd>2</kbd></span></div>
+	</section>
+
+	<footer>Original game by <a href="https://stabyourself.net/nottetris2/">Maurice Guégan (Stabyourself.net)</a></footer>
+
+	<script>
+		var overlay = document.getElementById('overlay');
+		var bar = document.querySelector('#progress div');
+		var progress = document.getElementById('progress');
+		var statusText = document.getElementById('status');
+		var playButton = document.getElementById('play');
+		var canvas = document.getElementById('canvas');
+		var engineLoaded = false, started = false, failed = false;
+
+		function showProgress(fraction) {
+			var percent = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
+			bar.style.width = percent + '%';
+			progress.setAttribute('aria-valuenow', percent);
+		}
+
+		function showError(message) {
+			failed = true;
+			progress.hidden = true;
+			playButton.hidden = true;
+			overlay.hidden = false;
+			overlay.classList.remove('ready');
+			statusText.textContent = message;
+		}
+
+		// the game (and its download, which love.js only starts with it) waits for a click or key press:
+		// browsers only allow sound after one, and this way the intro plays while someone is watching
+		function ready() {
+			if (started || failed || !engineLoaded) return;
+			progress.hidden = true;
+			playButton.hidden = false;
+			overlay.classList.add('ready');
+			statusText.textContent = 'Click or press any key to play';
+		}
+
+		function start() {
+			if (started || failed || !engineLoaded) return;
+			started = true;
+			overlay.classList.remove('ready');
+			playButton.hidden = true;
+			progress.hidden = false;
+			showProgress(0);
+			statusText.textContent = 'Loading…';
+			window.focus();
+			Love(Module);
+		}
+
+		overlay.addEventListener('click', start);
+		window.addEventListener('keydown', function (e) {
+			if (!started && engineLoaded && !e.repeat) {
+				e.preventDefault();
+				start();
+			}
+			// keep the arrow keys and space from scrolling the page
+			if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) e.preventDefault();
+		});
+		window.addEventListener('click', function () { window.focus(); });
+
+		document.getElementById('fullscreen').addEventListener('click', function () {
+			var stage = document.getElementById('stage');
+			var request = stage.requestFullscreen || stage.webkitRequestFullscreen;
+			if (request) request.call(stage);
+			window.focus();
+		});
+
+		canvas.addEventListener('webglcontextlost', function (e) {
+			e.preventDefault();
+			showError('The graphics context was lost. Reload the page to keep playing.');
+		});
+
+		var Module = {
+			arguments: {{{arguments}}},
+			INITIAL_MEMORY: {{memory}},
+			printErr: console.error.bind(console),
+			canvas: canvas,
+			totalDependencies: 0,
+			remainingDependencies: 0,
+			setStatus: function (text) {
+				if (failed) return;
+				var counts = /\((\d+)\/(\d+)\)/.exec(text || '');
+				if (text && /^Downloading/.test(text)) {
+					if (counts) showProgress(counts[1] / counts[2]);
+				} else if (text && /^Preparing/.test(text)) {
+					statusText.textContent = 'Starting…';
+				} else if (!text && started && Module.remainingDependencies === 0) {
+					overlay.hidden = true;
+					canvas.style.visibility = 'visible';
+					canvas.focus();
+				}
+			},
+			monitorRunDependencies: function (left) {
+				this.remainingDependencies = left;
+				this.totalDependencies = Math.max(this.totalDependencies, left);
+				Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : '');
+			}
+		};
+
+		window.onerror = function () {
+			showError('Something went wrong. Reload the page to try again.');
+		};
+
+		var generator = document.querySelector('meta[name=generator]');
+		if (generator) console.info(generator.content);
+
+		function engineReady() {
+			engineLoaded = true;
+			ready();
+		}
+	</script>
+	<script src="game.js"></script>
+	<script async src="love.js" onload="engineReady()"></script>
+</body>
+</html>
