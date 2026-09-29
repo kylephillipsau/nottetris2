@@ -32,4 +32,15 @@ for (const entry of fs.readdirSync(root)) {
 const lovejs = path.join(__dirname, 'node_modules', 'love.js', 'index.js');
 execFileSync(process.execPath, [lovejs, '-c', '-t', 'Not Tetris 2 (' + version + ')', staging, build], { stdio: 'inherit' });
 fs.rmSync(staging, { recursive: true, force: true });
+
+// swap love.js' demo page for ours, keeping the loader settings love.js worked out
+const generated = fs.readFileSync(path.join(build, 'index.html'), 'utf8');
+const setting = name => new RegExp(name + ': (.*?),?\n').exec(generated)[1];
+const page = fs.readFileSync(path.join(__dirname, 'page', 'index.html'), 'utf8')
+  .replace('{{title}}', 'Not Tetris 2')
+  .replace('{{{arguments}}}', setting('arguments'))
+  .replace('{{memory}}', setting('INITIAL_MEMORY'))
+  .replace('</title>', '</title>\n<meta name="generator" content="nottetris2 ' + version + '">');
+fs.writeFileSync(path.join(build, 'index.html'), page);
+fs.rmSync(path.join(build, 'theme'), { recursive: true, force: true });
 console.log('Built version ' + version + ' in ' + path.relative(process.cwd(), build) + ' - serve it with: npm run serve');
