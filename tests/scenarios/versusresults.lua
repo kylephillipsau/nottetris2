@@ -11,6 +11,10 @@ local function round(tag, rig)
 		table.insert(steps, {call=function(log) linesscorep1, linesscorep2 = rig.lines[1], rig.lines[2] end})
 	end
 	table.insert(steps, {state="failingBmulti", timeout=300})
+	if tag == "r1_mario" then --pieces turn the player's colour from the bottom up
+		table.insert(steps, {wait=1.5})
+		table.insert(steps, {shot=tag .. "_colorize"})
+	end
 	if rig.winner then
 		table.insert(steps, {call=function(log) winner = rig.winner end})
 	end

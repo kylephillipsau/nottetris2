@@ -12,19 +12,18 @@ function gameB_load()
 	
 	--PHYSICS--
 	meter = 30
-	world = love.physics.newWorld(0, 500, true )
+	newphysics()
 	
 	tetris = {}
 	
-	local wallbodies, wallshapes
-	wallbodies, wallshapes, wallfixtures = newwalls(world, {
+	wallfixtures = newwalls({
 		{points = {0,-64, 0,672, 32,672, 32,-64}, data = "left", friction = 0.00001},
 		{points = {352,-64, 352,672, 384,672, 384,-64}, data = "right", friction = 0.00001},
 		{points = {24,640, 24,672, 352,672, 352,640}, data = "ground"},
 		{points = {-8,-96, 384,-96, 384,-64, -8,-64}, data = "ceiling"},
 	})
 
-	world:setCallbacks(collideB, nil, nil, nil)
+	setcollisioncallback(collideB)
 	-----------
 	
 	--FIRST "nextpiece"-
@@ -45,17 +44,8 @@ function game_addTetriB()
 end
 
 function createtetriB(i, uniqueid, x, y)
-	if softbody then
-		tetris[uniqueid] = newsoftpiece(world, i, x, y, density)
-		softpieceimages(tetris[uniqueid], newImageData( "graphics/pieces/"..i..".png", scale), scale)
-	else
-		tetris[uniqueid] = newpiece(world, i, x, y, density)
-		tetris[uniqueid].image = newTintedImage( "graphics/pieces/"..i..".png", scale )
-	end
-
-	for i, v in pairs(tetris[uniqueid].fixtures) do
-		v:setUserData(uniqueid)
-	end
+	tetris[uniqueid] = newpiece(i, x, y, density)
+	setpiecedata(tetris[uniqueid], uniqueid)
 end
 
 function gameB_draw()
@@ -66,13 +56,13 @@ function gameB_draw()
 	--pieces--
 	for i, piece in pairs(tetris) do
 		if pause == false then
-			drawpiece(piece, physicsscale, scale)
+			drawpiece(piece, physicsscale)
 		end
 	end
 	
 	--Next piece
 	if pause == false then
-		love.graphics.draw(nextpieceimg[nextpiece], 136*scale, 120*scale, nextpiecerot, 1, 1, piececenterpreview[nextpiece][1]*scale, piececenterpreview[nextpiece][2]*scale)
+		drawpiecepreview(nextpiece, 136, 120, nextpiecerot, scale)
 	end
 	----------------
 	--start--
@@ -110,15 +100,13 @@ function gameB_update(dt)
 		steerpiece(tetris[1], dt, "", difficulty_speed*5)
 	end
 	
-	world:update(dt)
+	updatephysics(dt)
 	
 	if gamestate == "failingB" then
 		local clearcheck = true
 		for i, piece in pairs(tetris) do
-			for j, part in ipairs(pieceparts(piece)) do
-				if part.body:getY() < 648 then
-					clearcheck = false
-				end
+			if piecey(piece) < 648 then
+				clearcheck = false
 			end
 		end
 		
@@ -152,16 +140,11 @@ function endblockB()
 		wallfixtures[2]:destroy()
 		wallfixtures[2] = nil
 	else
-		--Transfer block (each block of a soft piece separately) from 1 to the end of tetris
-		local landed = pieceparts(tetris[1])
+		--Transfer block from 1 to the end of tetris
+		local n = highestbody()+1
+		tetris[n] = tetris[1]
 		tetris[1] = nil
-		for i, piece in ipairs(landed) do
-			local n = highestbody()+1
-			tetris[n] = piece
-			for j, v in pairs(piece.fixtures) do
-				v:setUserData({n})
-			end
-		end
+		setpiecedata(tetris[n], {n})
 		---------------------------
 		linesscore = linesscore + 1
 		scorescore = linesscore * 100

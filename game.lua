@@ -22,7 +22,31 @@ pieceblocks = {
 	{{  0, 16}, {  0,-16}, { 32, 16}, {-32,-16}}, --Z
 }
 
-function newpiece(world, kind, x, y, density) --creates a piece {kind, body, shapes, fixtures}; callers add its image
+function newphysics() --fresh physics for a game: a Box2D world for rigid pieces and the walls, and a soft world too when pieces are soft
+	world = love.physics.newWorld(0, 500, true)
+	softworld = softbody and newsoftworld(500) or nil
+end
+
+function updatephysics(dt)
+	world:update(dt)
+	if softworld then
+		softworld:update(dt)
+	end
+end
+
+function setcollisioncallback(callback) --callback(a, b) runs when two things start touching. a and b are fixtures or soft bodies; both have getUserData
+	world:setCallbacks(callback, nil, nil, nil)
+	if softworld then
+		softworld.callback = callback
+	end
+end
+
+--creates a piece of kind with its centre at x, y: {kind, body, shapes, fixtures} with a Box2D body, or
+--{kind, soft = true, body} with a soft body (which has the Box2D body methods the game uses) if pieces are soft
+function newpiece(kind, x, y, density)
+	if softworld then
+		return {kind = kind, soft = true, body = softworld:newpiece(kind, x, y, density)}
+	end
 	local piece = {kind = kind, shapes = {}, fixtures = {}}
 	piece.body = love.physics.newBody(world, x, y, "dynamic")
 	for i, block in ipairs(pieceblocks[kind]) do
@@ -34,16 +58,42 @@ function newpiece(world, kind, x, y, density) --creates a piece {kind, body, sha
 	return piece
 end
 
-function drawpiece(piece, physicsscale, scale) --draws a piece's image at its body (each block of a soft piece at its own)
-	if piece.blocks then
-		for i, block in ipairs(piece.blocks) do
-			drawpiece(block, physicsscale, scale)
+function setpiecedata(piece, data) --what collision callbacks get from getUserData for this piece
+	if piece.soft then
+		piece.body:setUserData(data)
+	else
+		for i, fixture in pairs(piece.fixtures) do
+			fixture:setUserData(data)
 		end
+	end
+end
+
+function setpiecemask(piece, ...) --the collision categories the piece passes through
+	if piece.soft then
+		piece.body:setMask(...)
+	else
+		for i, fixture in pairs(piece.fixtures) do
+			fixture:setMask(...)
+		end
+	end
+end
+
+function piecey(piece) --height of a piece: its body's origin, or a soft piece's centre
+	return piece.body:getY()
+end
+
+function setpiecevelocity(piece, vx, vy)
+	piece.body:setLinearVelocity(vx, vy)
+end
+
+function drawpiece(piece, physicsscale) --draws a piece in the current colour
+	if piece.soft then
+		drawsoftpiece(piece.body, physicsscale)
 		return
 	end
 	local body = piece.body
-	local center = piece.center or piececenter[piece.kind] --blocks of soft pieces have their own image centre
-	love.graphics.draw( piece.image, body:getX()*physicsscale, body:getY()*physicsscale, body:getAngle(), 1, 1, center[1]*scale, center[2]*scale)
+	local clip = piece.cut and piecepolygons(piece) or nil --only what is left of cut pieces is drawn
+	drawpieceart(piece.kind, body:getX()*physicsscale, body:getY()*physicsscale, body:getAngle(), physicsscale, clip)
 end
 
 function highestbody() --index of the last landed piece in tetris. tetris[1] is the falling piece and may be missing, so # can't be trusted
@@ -55,10 +105,6 @@ function highestbody() --index of the last landed piece in tetris. tetris[1] is 
 end
 function steerpiece(piece, dt, player, maxfallspeed) --applies the rotate/move/drop controls of player ("", "p1" or "p2") to a falling piece
 	player = player or ""
-	if piece.blocks then
-		steersoftpiece(piece, dt, player, maxfallspeed)
-		return
-	end
 	local body = piece.body
 	if controls.isDown("rotateright"..player) then
 		if body:getAngularVelocity() < 3 then
@@ -95,22 +141,39 @@ function steerpiece(piece, dt, player, maxfallspeed) --applies the rotate/move/d
 	end
 end
 
-function newwalls(world, walls) --creates the static walls of a playfield. each wall is {points, data, friction, category}; returns body, shapes, fixtures (indexed from 0)
+local function destroywall(wall)
+	wall.fixture:destroy()
+	if wall.soft then
+		softworld:remove(wall.soft)
+	end
+end
+
+--creates the static walls of a playfield, each {points, data, friction, category}, in Box2D and in the soft world
+--if there is one. returns them indexed from 0; wall:destroy() takes one away
+function newwalls(walls)
 	local body = love.physics.newBody(world, 32, -64, "static")
-	local shapes = {}
-	local fixtures = {}
+	local result = {}
 	for i, wall in ipairs(walls) do
-		shapes[i-1] = love.physics.newPolygonShape(unpack(wall.points))
-		fixtures[i-1] = newfixture(body, shapes[i-1])
-		fixtures[i-1]:setUserData(wall.data)
+		local fixture = newfixture(body, love.physics.newPolygonShape(unpack(wall.points)))
+		fixture:setUserData(wall.data)
 		if wall.category then
-			fixtures[i-1]:setCategory(wall.category)
+			fixture:setCategory(wall.category)
 		end
 		if wall.friction then
-			fixtures[i-1]:setFriction(wall.friction)
+			fixture:setFriction(wall.friction)
+		end
+		result[i-1] = {fixture = fixture, destroy = destroywall}
+		if softworld then --walls are boxes
+			local x1, y1, x2, y2 = math.huge, math.huge, -math.huge, -math.huge
+			for j = 1, #wall.points, 2 do
+				x1, x2 = math.min(x1, wall.points[j]), math.max(x2, wall.points[j])
+				y1, y2 = math.min(y1, wall.points[j+1]), math.max(y2, wall.points[j+1])
+			end
+			local bx, by = body:getPosition()
+			result[i-1].soft = softworld:newwall(x1 + bx, y1 + by, x2 + bx, y2 + by, wall.data, wall.friction, wall.category)
 		end
 	end
-	return body, shapes, fixtures
+	return result
 end
 
 function drawscorepanel() --score, level and lines in the single player sidebar

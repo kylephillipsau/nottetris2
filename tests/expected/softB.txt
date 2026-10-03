@@ -1,7 +1,7 @@
-8c18b657d24470829aa9764213b441c5  sb01_falling.png
-c8406745ea737a167e77b2f757f723fb  sb02_stack.png
-96543b8b364a2ea12fc02336f43fc3d9  sb03_failed.png
+9e83af832b6ced98baddb7e3e405d2fb  sb01_falling.png
+2ae6aed1ad2e84d5ea4e82f554503877  sb02_stack.png
+bf946cdf08d8f985a4deeef305574967  sb03_failed.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 e7b8b0b4c17831aaac52315dd625c17d  highscoresB.txt
 4740f2cb09f10ea903540a33f159f351  options.txt
-d3b7b4d855621ce14180f0c898c1e16b  sb_d1.txt
+433b255acfdcdd01f4630a0cbc4e6b24  sb_d1.txt
