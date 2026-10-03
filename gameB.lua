@@ -38,15 +38,20 @@ function game_addTetriB()
 	--NEW BLOCK--
 	randomblock = nextpiece
 	createtetriB(randomblock, 1, 224, blockstartY)
-	tetris[1].body:setLinearVelocity(0, difficulty_speed)
+	setpiecevelocity(tetris[1], 0, difficulty_speed)
 	
 	--RANDOMIZE
 	nextpiece = math.random(7)
 end
 
 function createtetriB(i, uniqueid, x, y)
-	tetris[uniqueid] = newpiece(world, i, x, y, density)
-	tetris[uniqueid].image = newTintedImage( "graphics/pieces/"..i..".png", scale )
+	if softbody then
+		tetris[uniqueid] = newsoftpiece(world, i, x, y, density)
+		softpieceimages(tetris[uniqueid], newImageData( "graphics/pieces/"..i..".png", scale), scale)
+	else
+		tetris[uniqueid] = newpiece(world, i, x, y, density)
+		tetris[uniqueid].image = newTintedImage( "graphics/pieces/"..i..".png", scale )
+	end
 
 	for i, v in pairs(tetris[uniqueid].fixtures) do
 		v:setUserData(uniqueid)
@@ -102,7 +107,7 @@ function gameB_update(dt)
 	end
 
 	if gamestate == "gameB" then
-		steerpiece(tetris[1].body, dt, "", difficulty_speed*5)
+		steerpiece(tetris[1], dt, "", difficulty_speed*5)
 	end
 	
 	world:update(dt)
@@ -110,8 +115,10 @@ function gameB_update(dt)
 	if gamestate == "failingB" then
 		local clearcheck = true
 		for i, piece in pairs(tetris) do
-			if piece.body:getY() < 648 then
-				clearcheck = false
+			for j, part in ipairs(pieceparts(piece)) do
+				if part.body:getY() < 648 then
+					clearcheck = false
+				end
 			end
 		end
 		
@@ -133,7 +140,7 @@ function collideB(a, b)
 end
 
 function endblockB()
-	if tetris[1].body:getY() < losingY then
+	if piecey(tetris[1]) < losingY then
 		--LOSE--
 		gamestate = "failingB"
 		if musicno < 4 then
@@ -145,12 +152,15 @@ function endblockB()
 		wallfixtures[2]:destroy()
 		wallfixtures[2] = nil
 	else
-		--Transfer block from 1 to the end of tetris
-		local n = highestbody()+1
-		tetris[n] = tetris[1]
+		--Transfer block (each block of a soft piece separately) from 1 to the end of tetris
+		local landed = pieceparts(tetris[1])
 		tetris[1] = nil
-		for i, v in pairs(tetris[n].fixtures) do
-			v:setUserData({n})
+		for i, piece in ipairs(landed) do
+			local n = highestbody()+1
+			tetris[n] = piece
+			for j, v in pairs(piece.fixtures) do
+				v:setUserData({n})
+			end
 		end
 		---------------------------
 		linesscore = linesscore + 1

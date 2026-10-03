@@ -48,13 +48,19 @@ function game_addTetriA() --creates new block (using createtetriA) at 1 and sets
 	--NEW BLOCK--
 	randomblock = nextpiece
 	createtetriA(randomblock, 1, 224, blockstartY)
-	tetris[1].body:setLinearVelocity(0, difficulty_speed)
+	setpiecevelocity(tetris[1], 0, difficulty_speed)
 end	
 
 function createtetriA(i, uniqueid, x, y) --creates block, including body, shapes, image, imagedata and whatnot.
-	local piece = newpiece(world, i, x, y, 1)
-	piece.imagedata = newImageData( "graphics/pieces/"..i..".png", scale)
-	piece.image = love.graphics.newImage( piece.imagedata )
+	local piece
+	if softbody then
+		piece = newsoftpiece(world, i, x, y, 1)
+		softpieceimages(piece, newImageData( "graphics/pieces/"..i..".png", scale), scale)
+	else
+		piece = newpiece(world, i, x, y, 1)
+		piece.imagedata = newImageData( "graphics/pieces/"..i..".png", scale)
+		piece.image = love.graphics.newImage( piece.imagedata )
+	end
 	tetris[uniqueid] = piece
 
 	for i, v in pairs(tetris[uniqueid].fixtures) do
@@ -77,7 +83,7 @@ function gameA_draw()
 	else
 		for i = 1, #tetricutimg do
 			if pause == false then
-				love.graphics.draw( tetricutimg[i], tetricutpos[i*2-1]*physicsscale, tetricutpos[i*2]*physicsscale, tetricutang[i], 1, 1, piececenter[tetricutkind[i]][1]*scale, piececenter[tetricutkind[i]][2]*scale)
+				love.graphics.draw( tetricutimg[i], tetricutpos[i*2-1]*physicsscale, tetricutpos[i*2]*physicsscale, tetricutang[i], 1, 1, tetricutcenter[i][1]*scale, tetricutcenter[i][2]*scale)
 			end
 		end
 		
@@ -197,7 +203,7 @@ function gameA_update(dt)
 	end
 		
 	if gamestate == "gameA" then
-		steerpiece(tetris[1].body, dt, "", 500)
+		steerpiece(tetris[1], dt, "", 500)
 	end
 	
 	endblock = false
@@ -221,8 +227,10 @@ function gameA_update(dt)
 	if gamestate == "failingA" then
 		local clearcheck = true
 		for i, piece in pairs(tetris) do
-			if piece.body:getY() < 648 then
-				clearcheck = false
+			for j, part in ipairs(pieceparts(piece)) do
+				if part.body:getY() < 648 then
+					clearcheck = false
+				end
 			end
 		end
 		
@@ -375,7 +383,7 @@ function rebuildpiece(index, shapes, shapegroups, numberofgroups) --gives the pi
 	
 	for a = 2, numberofgroups do
 		local n = highestbody()+1
-		local newpiece = {kind = piece.kind, shapes = {}, fixtures = {}}
+		local newpiece = {kind = piece.kind, center = piece.center, shapes = {}, fixtures = {}}
 		tetris[n] = newpiece
 		newpiece.body = love.physics.newBody(world, piece.body:getX(), piece.body:getY(), "dynamic")
 		newpiece.body:setAngle(piece.body:getAngle())
@@ -660,7 +668,7 @@ end
 function snapshotpieces() --saves position, angle, kind and image of each piece so they can be drawn unchanged while the cleared lines blink
 	tetricutpos = {}
 	tetricutang = {}
-	tetricutkind = {}
+	tetricutcenter = {}
 	tetricutimg = {}
 	
 	for i, piece in pairs(tetris) do
@@ -668,7 +676,7 @@ function snapshotpieces() --saves position, angle, kind and image of each piece 
 			table.insert(tetricutpos, piece.body:getX())
 			table.insert(tetricutpos, piece.body:getY())
 			table.insert(tetricutang, piece.body:getAngle())
-			table.insert(tetricutkind, piece.kind)
+			table.insert(tetricutcenter, piece.center or piececenter[piece.kind])
 			table.insert(tetricutimg, love.graphics.newImage(piece.imagedata))
 		end
 	end
@@ -849,7 +857,7 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 	if aData[1] == 1 or bData[1] == 1 then
 		if aData[1] ~= "left" and aData[1] ~= "right" and bData[1] ~= "left" and bData[1] ~= "right" then
 			if gamestate == "gameA" then
-				if tetris[1].body:getY() < losingY then
+				if piecey(tetris[1]) < losingY then
 					gamestate = "failingA"
 					if musicno < 4 then
 						love.audio.stop(music[musicno])
@@ -862,13 +870,16 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 						wallfixtures[2] = nil
 					end
 				else
-					--move the landed piece from 1 to the end of tetris
-					local n = highestbody()+1
-					tetris[n] = tetris[1]
+					--move the landed piece (each block of a soft piece separately) from 1 to the end of tetris
+					local landed = pieceparts(tetris[1])
 					tetris[1] = nil
-					tetris[n].body:setLinearDamping(0.5)
-					for i, v in pairs(tetris[n].fixtures) do
-						v:setUserData({n})
+					for i, piece in ipairs(landed) do
+						local n = highestbody()+1
+						tetris[n] = piece
+						piece.body:setLinearDamping(0.5)
+						for j, v in pairs(piece.fixtures) do
+							v:setUserData({n})
+						end
 					end
 
 					endblock = true

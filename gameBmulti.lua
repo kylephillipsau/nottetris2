@@ -193,10 +193,10 @@ function gameBmulti_update(dt)
 		versuscountdown()
 	elseif gamestate == "gameBmulti" then
 		if p1fail == false then
-			steerpiece(multipieces[1][counterp1].body, dt, "p1", difficulty_speed*5)
+			steerpiece(multipieces[1][counterp1], dt, "p1", difficulty_speed*5)
 		end
 		if p2fail == false then
-			steerpiece(multipieces[2][counterp2].body, dt, "p2", difficulty_speed*5)
+			steerpiece(multipieces[2][counterp2], dt, "p2", difficulty_speed*5)
 		end
 	elseif gamestate == "failingBmulti" then
 		if love.timer.getTime() - colorizetimer > colorizeduration then
@@ -237,8 +237,10 @@ end
 function piecesfallenout() --true once both players' pieces have dropped out of the playfield
 	for player = 1, 2 do
 		for i, piece in pairs(multipieces[player]) do
-			if piece.body:getY() < 162*mpscale then
-				return false
+			for j, part in ipairs(pieceparts(piece)) do
+				if part.body:getY() < 162*mpscale then
+					return false
+				end
 			end
 		end
 	end
@@ -321,7 +323,7 @@ function game_addTetriBmultip1()
 	counterp1 = counterp1 + 1
 	--NEW BLOCK--
 	createtetriBmulti(1, nextpiecep1, counterp1, 388, blockstartY)
-	multipieces[1][counterp1].body:setLinearVelocity(0, difficulty_speed)
+	setpiecevelocity(multipieces[1][counterp1], 0, difficulty_speed)
 	
 	--RANDOMIZE
 	if counterp1 > #randomtable then
@@ -334,7 +336,7 @@ function game_addTetriBmultip2()
 	counterp2 = counterp2 + 1
 	--NEW BLOCK--
 	createtetriBmulti(2, nextpiecep2, counterp2, 708, blockstartY)
-	multipieces[2][counterp2].body:setLinearVelocity(0, difficulty_speed)
+	setpiecevelocity(multipieces[2][counterp2], 0, difficulty_speed)
 	
 	--RANDOMIZE
 	if counterp2 > #randomtable then
@@ -344,8 +346,14 @@ function game_addTetriBmultip2()
 end
 
 function createtetriBmulti(player, i, uniqueid, x, y)
-	local piece = newpiece(world, i, x, y, 1)
-	piece.image = newTintedImage( "graphics/pieces/"..i..".png", mpscale )
+	local piece
+	if softbody then
+		piece = newsoftpiece(world, i, x, y, 1)
+		softpieceimages(piece, newImageData( "graphics/pieces/"..i..".png", mpscale), mpscale)
+	else
+		piece = newpiece(world, i, x, y, 1)
+		piece.image = newTintedImage( "graphics/pieces/"..i..".png", mpscale )
+	end
 	multipieces[player][uniqueid] = piece
 
 	for i, v in pairs(piece.fixtures) do
@@ -356,14 +364,16 @@ end
 
 function drawmultipieces(player, color) --draws a player's pieces, tinting those below the rising game over line
 	for i, piece in pairs(multipieces[player]) do
-		love.graphics.setColor(1, 1, 1)
-		if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
-			local timepassed = love.timer.getTime() - colorizetimer
-			if piece.body:getY() > 576 - (576*(timepassed/colorizeduration)) then
-				love.graphics.setColor(unpack(color))
+		for j, part in ipairs(pieceparts(piece)) do --each block of a soft piece is tinted on its own
+			love.graphics.setColor(1, 1, 1)
+			if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
+				local timepassed = love.timer.getTime() - colorizetimer
+				if part.body:getY() > 576 - (576*(timepassed/colorizeduration)) then
+					love.graphics.setColor(unpack(color))
+				end
 			end
+			drawpiece(part, physicsmpscale, mpscale)
 		end
-		drawpiece(piece, physicsmpscale, mpscale)
 	end
 end
 
@@ -394,7 +404,7 @@ function endblockp1()
 		end
 	end
 	
-	if multipieces[1][counterp1].body:getY() < losingY then --P1 hit the top
+	if piecey(multipieces[1][counterp1]) < losingY then --P1 hit the top
 		--FAIL P1--
 		p1fail = true
 		
@@ -418,7 +428,7 @@ function endblockp2()
 		end
 	end
 	
-	if multipieces[2][counterp2].body:getY() < losingY then --P2 hit the top
+	if piecey(multipieces[2][counterp2]) < losingY then --P2 hit the top
 		--FAIL P2--
 		p2fail = true
 		

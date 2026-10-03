@@ -1,0 +1,10 @@
+a59e10027be353d14c10432637ea1404  sa01_falling.png
+b8b03eda858a928f1c8424e77623b3ad  sa02_turning.png
+fb13c9d68643d7f771406b96edcadb11  sa03_moved.png
+030263885734f7c5ee16faf9ba6472c5  sa04_stack.png
+1beb94d03f52ffa2af01cf7ae9eb9095  sa05_later.png
+584848972e4309c7ca8b6d8109a17353  sa06_failed.png
+e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
+4740f2cb09f10ea903540a33f159f351  options.txt
+01745efccb582b4b5093f7f6991f185b  sa_d1.txt
+893b7da8141bd3ecf0a7787623f2120b  sa_d2.txt

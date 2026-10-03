@@ -71,21 +71,26 @@ love.update = function(dt)
 			held[s.hold] = true
 		elseif s.release then
 			held[s.release] = nil
-		elseif s.shot then --captured after this frame is drawn, i.e. after any later steps that run in the same update
+		elseif s.shot then
 			local name = s.shot
 			love.graphics.captureScreenshot(function(img)
 				img:encode("png", name .. ".png")
 				log("shot", name)
 			end)
+			--the screenshot is taken once this frame is drawn, so leave the next steps for the next frame
+			step = step + 1
+			break
 		elseif s.dump then --exact physics state of every piece, compared like the screenshots
 			local lines = {"gamestate " .. tostring(gamestate), "score " .. tostring(scorescore) .. " lines " .. tostring(linesscore)}
 			for _, list in ipairs({tetris or {}, multipieces and multipieces[1] or {}, multipieces and multipieces[2] or {}}) do
 				for i = 1, table.maxn(list) do
 					local piece = list[i]
 					if piece then
-						local b = piece.body
-						table.insert(lines, string.format("%d kind %d shapes %d pos %.6f %.6f angle %.6f vel %.6f %.6f",
-							i, piece.kind, #piece.shapes, b:getX(), b:getY(), b:getAngle(), b:getLinearVelocity()))
+						for j, part in ipairs(piece.blocks or {piece}) do --a falling soft piece is a group of blocks
+							local b = part.body
+							table.insert(lines, string.format("%d%s kind %d shapes %d pos %.6f %.6f angle %.6f vel %.6f %.6f",
+								i, piece.blocks and "." .. j or "", part.kind, #part.shapes, b:getX(), b:getY(), b:getAngle(), b:getLinearVelocity()))
+						end
 					end
 				end
 				table.insert(lines, "--")

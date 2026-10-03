@@ -1,6 +1,6 @@
-a3bde528d429396e0e1644b912150244  f01_title.png
-9ca1f518b7c58f82f0daf5355962fb53  f02_gameA.png
-0c6aba31208cf7d06956efc93de0581d  f03_versus.png
-3e5d541c7b9b6dbe4c07472010b1330d  f04_windowed.png
+5a53a3c4d6a2829595ecc24f5be4c4e3  f01_title.png
+009e8d1d909ae73a519f3dfa89365c98  f02_gameA.png
+72f4287aabdc22a993b6d98fb13dc909  f03_versus.png
+a5411a9a2d1a81f8c4cc8f46e7eb54fb  f04_windowed.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
-d441ebb6a3c9878ec6b3561873e1994c  options.txt
+0f31141c99cbf58c38eb42807eb5d533  options.txt

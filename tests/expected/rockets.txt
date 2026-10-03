@@ -11,4 +11,4 @@ b511c20880276dd46e2bc8efb251f049  rocket4_20.0.png
 8331391d5cdf13d358d07afc91ae3b6e  rocket4_36.3.png
 00a6b782a935fc3c3a304378852e8d62  rocket4_37.0.png
 1920f01fe3ba604c8d2b1941dfb6f7a1  highscoresA.txt
-80c293503c1d6f537142fe54cbbafe75  options.txt
+4740f2cb09f10ea903540a33f159f351  options.txt

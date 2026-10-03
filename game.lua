@@ -34,9 +34,16 @@ function newpiece(world, kind, x, y, density) --creates a piece {kind, body, sha
 	return piece
 end
 
-function drawpiece(piece, physicsscale, scale) --draws a piece's image at its body
+function drawpiece(piece, physicsscale, scale) --draws a piece's image at its body (each block of a soft piece at its own)
+	if piece.blocks then
+		for i, block in ipairs(piece.blocks) do
+			drawpiece(block, physicsscale, scale)
+		end
+		return
+	end
 	local body = piece.body
-	love.graphics.draw( piece.image, body:getX()*physicsscale, body:getY()*physicsscale, body:getAngle(), 1, 1, piececenter[piece.kind][1]*scale, piececenter[piece.kind][2]*scale)
+	local center = piece.center or piececenter[piece.kind] --blocks of soft pieces have their own image centre
+	love.graphics.draw( piece.image, body:getX()*physicsscale, body:getY()*physicsscale, body:getAngle(), 1, 1, center[1]*scale, center[2]*scale)
 end
 
 function highestbody() --index of the last landed piece in tetris. tetris[1] is the falling piece and may be missing, so # can't be trusted
@@ -46,8 +53,13 @@ function highestbody() --index of the last landed piece in tetris. tetris[1] is 
 	end
 	return i-1
 end
-function steerpiece(body, dt, player, maxfallspeed) --applies the rotate/move/drop controls of player ("", "p1" or "p2") to a falling piece
+function steerpiece(piece, dt, player, maxfallspeed) --applies the rotate/move/drop controls of player ("", "p1" or "p2") to a falling piece
 	player = player or ""
+	if piece.blocks then
+		steersoftpiece(piece, dt, player, maxfallspeed)
+		return
+	end
+	local body = piece.body
 	if controls.isDown("rotateright"..player) then
 		if body:getAngularVelocity() < 3 then
 			body:applyTorque( 70*TORQUESCALE )

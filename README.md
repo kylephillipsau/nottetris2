@@ -29,10 +29,14 @@ The page around the game is `web/page/index.html`. Every push to `master` publis
 
 Key bindings live in `controls.lua`.
 
+## Options
+Volume, colour, window scale and fullscreen, plus **Softbody**: each block of a piece becomes its own body joined to its neighbours by springy joints, so pieces bend and wobble. Its stiffness is set at the top of `softbody.lua`.
+
 ## Code layout
 - `main.lua` – startup, asset loading, options/highscore files and the screen registry
 - `controls.lua` – key bindings
 - `game.lua` – pieces, walls, steering and drawing shared by the game modes
+- `softbody.lua` – soft body pieces (the Softbody option)
 - `gameA.lua` – "normal" mode, including cutting pieces when a line is cleared
 - `gameB.lua` – "stack" mode
 - `gameBmulti.lua` – versus mode
