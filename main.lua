@@ -12,6 +12,7 @@ function love.load()
 	require "controls"
 	require "game"
 	require "softbody"
+	require "pieceart"
 	require "gameB"
 	require "gameBmulti"
 	require "gameA"
@@ -32,7 +33,7 @@ function love.load()
 	if fullscreen then
 		togglefullscreen(true)
 	elseif scale ~= 5 then --conf.lua opens the window at scale 5
-		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=4} )
 	end
 	
 	physicsscale = scale/4
@@ -191,11 +192,8 @@ function loadimages()
 	
 	congratsline = newTintedImage("graphics/congratsline.png")
 	
-	--nextpiece
-	nextpieceimg = {}
-	for i = 1, 7 do
-		nextpieceimg[i] = newTintedImage( "graphics/pieces/"..i..".png", scale )
-	end
+	--pieces are vector art in the same colours
+	loadpieceart()
 	
 	--font--
 	local tetrisfont = newTintedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
@@ -459,7 +457,7 @@ end
 
 function restorewindow() --back to the single player window size after versus mode
 	if not fullscreen then
-		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=4} )
 	end
 end
 
@@ -469,9 +467,9 @@ function togglefullscreen(fullscr)
 	if fullscr == false then
 		scale = suggestedscale
 		physicsscale = scale/4
-		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=0} )
+		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=4} )
 	else
-		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=0} )
+		love.window.setMode( 0, 0, {fullscreen=true, vsync=vsync, msaa=4} )
 		desktopwidth, desktopheight = love.graphics.getDimensions()
 		computescales()
 		
@@ -542,11 +540,7 @@ function savehighscores()
 end
 
 function changescale(i)
-	love.window.setMode( 160*i, 144*i, {vsync=vsync, msaa=0} )
-	nextpieceimg = {}
-	for j = 1, 7 do
-		nextpieceimg[j] = newTintedImage( "graphics/pieces/"..j..".png", i )
-	end
+	love.window.setMode( 160*i, 144*i, {vsync=vsync, msaa=4} )
 	physicsscale = i/4
 end
 

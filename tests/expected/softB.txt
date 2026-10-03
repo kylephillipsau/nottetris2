@@ -1,5 +1,5 @@
-8c18b657d24470829aa9764213b441c5  sb01_falling.png
-c8406745ea737a167e77b2f757f723fb  sb02_stack.png
+1000b5366f75a5b37062adab6ed490bf  sb01_falling.png
+8d96c196995ad648a3210c490730b627  sb02_stack.png
 96543b8b364a2ea12fc02336f43fc3d9  sb03_failed.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 e7b8b0b4c17831aaac52315dd625c17d  highscoresB.txt

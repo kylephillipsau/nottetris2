@@ -42,8 +42,8 @@ function drawpiece(piece, physicsscale, scale) --draws a piece's image at its bo
 		return
 	end
 	local body = piece.body
-	local center = piece.center or piececenter[piece.kind] --blocks of soft pieces have their own image centre
-	love.graphics.draw( piece.image, body:getX()*physicsscale, body:getY()*physicsscale, body:getAngle(), 1, 1, center[1]*scale, center[2]*scale)
+	local clip = (piece.cut or piece.offset) and piecepolygons(piece) or nil --only what is left of cut pieces is drawn
+	drawpieceart(piece.kind, body:getX()*physicsscale, body:getY()*physicsscale, body:getAngle(), physicsscale, clip, piece.offset)
 end
 
 function highestbody() --index of the last landed piece in tetris. tetris[1] is the falling piece and may be missing, so # can't be trusted

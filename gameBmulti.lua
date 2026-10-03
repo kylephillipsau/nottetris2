@@ -19,14 +19,10 @@ function gameBmulti_load()
 	mpfullscreenoffsetY = (desktopheight-144*mpscale)/2
 	
 	if not fullscreen then
-		love.window.setMode( 274*mpscale, 144*mpscale, {fullscreen=fullscreen, vsync=vsync, msaa=0} )
+		love.window.setMode( 274*mpscale, 144*mpscale, {fullscreen=fullscreen, vsync=vsync, msaa=4} )
 	end
 	
 	--nextpieces
-	nextpieceimgmp = {}
-	for i = 1, 7 do
-		nextpieceimgmp[i] = newTintedImage( "graphics/pieces/"..i..".png", mpscale )
-	end
 	
 	difficulty_speed = 100
 
@@ -103,13 +99,13 @@ function gameBmulti_draw()
 	
 	drawmultipieces(1, p1color)
 	if p1fail == false and nextpiecep1 then
-		love.graphics.draw(nextpieceimgmp[nextpiecep1], 24*mpscale, 120*mpscale, -nextpiecerot, 1, 1, piececenterpreview[nextpiecep1][1]*mpscale, piececenterpreview[nextpiecep1][2]*mpscale)
+		drawpiecepreview(nextpiecep1, 24, 120, -nextpiecerot, mpscale)
 	end
 	
 	drawmultipieces(2, p2color)
 	love.graphics.setColor(1, 1, 1)
 	if p2fail == false and nextpiecep2 then
-		love.graphics.draw(nextpieceimgmp[nextpiecep2], 250*mpscale, 120*mpscale, nextpiecerot, 1, 1, piececenterpreview[nextpiecep2][1]*mpscale, piececenterpreview[nextpiecep2][2]*mpscale)
+		drawpiecepreview(nextpiecep2, 250, 120, nextpiecerot, mpscale)
 	end
 	
 	--scores and tiles
@@ -349,10 +345,8 @@ function createtetriBmulti(player, i, uniqueid, x, y)
 	local piece
 	if softbody then
 		piece = newsoftpiece(world, i, x, y, 1)
-		softpieceimages(piece, newImageData( "graphics/pieces/"..i..".png", mpscale), mpscale)
 	else
 		piece = newpiece(world, i, x, y, 1)
-		piece.image = newTintedImage( "graphics/pieces/"..i..".png", mpscale )
 	end
 	multipieces[player][uniqueid] = piece
 

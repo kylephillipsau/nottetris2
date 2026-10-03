@@ -1,4 +1,4 @@
-73230e1f0430081801f9655178607b21  sv01_playing.png
+6e5f52fd383d2c38392fdd9b4404292d  sv01_playing.png
 7cceced5cd704ac8e0e5b360073c3e68  sv02_results.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 4740f2cb09f10ea903540a33f159f351  options.txt

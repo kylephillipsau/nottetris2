@@ -1,17 +1,16 @@
 --Soft body pieces (the softbody option): each block of a piece is its own body, welded to its
 --neighbours by springy joints, so pieces bend and wobble. A falling soft piece is a group
 --{kind, soft = true, blocks = {...}, fixtures = {...}} whose blocks are ordinary one-block pieces
---{kind, body, shapes, fixtures, image, imagedata, center}. Once a soft piece lands its blocks are
+--{kind, body, shapes, fixtures, offset}. Once a soft piece lands its blocks are
 --stored one by one, so measuring and cutting lines treats them like any other piece; a cut block
 --gets a new body and with it loses the joints to its neighbours.
 
 SOFTFREQUENCY = 4 --how stiff the joints between blocks are, in Hz; lower is wobblier
 SOFTDAMPING = 0.3 --how quickly the wobbling dies down (0 to 1)
-SOFTBLOCKSIZE = 10 --size of each block's cut-out of the piece sprite in game pixels: the 8px block plus its 1px outline
 
 softgroupcounter = 0
 
-function newsoftpiece(world, kind, x, y, density) --creates the bodies and joints of a soft piece; callers add its images with softpieceimages
+function newsoftpiece(world, kind, x, y, density) --creates the bodies and joints of a soft piece
 	softgroupcounter = softgroupcounter % 32000 + 1
 	local group = {kind = kind, soft = true, blocks = {}, fixtures = {}, joints = {}}
 	for i, offset in ipairs(pieceblocks[kind]) do
@@ -40,18 +39,6 @@ function newsoftpiece(world, kind, x, y, density) --creates the bodies and joint
 		end
 	end
 	return group
-end
-
-function softpieceimages(group, imagedata, s) --cuts each block's part out of the piece sprite (imagedata at scale s)
-	local size = SOFTBLOCKSIZE*s
-	for i, block in ipairs(group.blocks) do
-		local centerx = (piececenter[group.kind][1] + block.offset[1]/4)*s
-		local centery = (piececenter[group.kind][2] + block.offset[2]/4)*s
-		block.imagedata = love.image.newImageData(size, size)
-		block.imagedata:paste(imagedata, 0, 0, centerx - size/2, centery - size/2, size, size)
-		block.image = love.graphics.newImage(block.imagedata)
-		block.center = {SOFTBLOCKSIZE/2, SOFTBLOCKSIZE/2}
-	end
 end
 
 function pieceparts(piece) --the separately simulated parts of a piece: its blocks if soft, else just itself

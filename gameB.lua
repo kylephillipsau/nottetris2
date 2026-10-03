@@ -47,10 +47,8 @@ end
 function createtetriB(i, uniqueid, x, y)
 	if softbody then
 		tetris[uniqueid] = newsoftpiece(world, i, x, y, density)
-		softpieceimages(tetris[uniqueid], newImageData( "graphics/pieces/"..i..".png", scale), scale)
 	else
 		tetris[uniqueid] = newpiece(world, i, x, y, density)
-		tetris[uniqueid].image = newTintedImage( "graphics/pieces/"..i..".png", scale )
 	end
 
 	for i, v in pairs(tetris[uniqueid].fixtures) do
@@ -72,7 +70,7 @@ function gameB_draw()
 	
 	--Next piece
 	if pause == false then
-		love.graphics.draw(nextpieceimg[nextpiece], 136*scale, 120*scale, nextpiecerot, 1, 1, piececenterpreview[nextpiece][1]*scale, piececenterpreview[nextpiece][2]*scale)
+		drawpiecepreview(nextpiece, 136, 120, nextpiecerot, scale)
 	end
 	----------------
 	--start--

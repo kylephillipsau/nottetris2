@@ -23,7 +23,7 @@ function gameA_load()
 	meter = 30
 	world = love.physics.newWorld(0, 500, true )
 
-	tetris = {} --pieces: {kind, body, shapes, fixtures, image, imagedata}. 1 is the falling piece
+	tetris = {} --pieces: {kind, body, shapes, fixtures, cut}. 1 is the falling piece
 	local wallbodies, wallshapes
 	wallbodies, wallshapes, wallfixtures = newwalls(world, {
 		{points = {-8,-64, -8,672, 24,672, 24,-64}, data = {"left"}, friction = 0.00001},
@@ -51,15 +51,12 @@ function game_addTetriA() --creates new block (using createtetriA) at 1 and sets
 	setpiecevelocity(tetris[1], 0, difficulty_speed)
 end	
 
-function createtetriA(i, uniqueid, x, y) --creates block, including body, shapes, image, imagedata and whatnot.
+function createtetriA(i, uniqueid, x, y) --creates a piece of kind i at index uniqueid of tetris
 	local piece
 	if softbody then
 		piece = newsoftpiece(world, i, x, y, 1)
-		softpieceimages(piece, newImageData( "graphics/pieces/"..i..".png", scale), scale)
 	else
 		piece = newpiece(world, i, x, y, 1)
-		piece.imagedata = newImageData( "graphics/pieces/"..i..".png", scale)
-		piece.image = love.graphics.newImage( piece.imagedata )
 	end
 	tetris[uniqueid] = piece
 
@@ -81,9 +78,9 @@ function gameA_draw()
 			end
 		end
 	else
-		for i = 1, #tetricutimg do
+		for i, piece in ipairs(tetricut) do
 			if pause == false then
-				love.graphics.draw( tetricutimg[i], tetricutpos[i*2-1]*physicsscale, tetricutpos[i*2]*physicsscale, tetricutang[i], 1, 1, tetricutcenter[i][1]*scale, tetricutcenter[i][2]*scale)
+				drawpieceart(piece.kind, piece.x*physicsscale, piece.y*physicsscale, piece.angle, physicsscale, piece.clip, piece.offset)
 			end
 		end
 		
@@ -110,7 +107,7 @@ function gameA_draw()
 	love.graphics.setColor(1, 1, 1)
 	--Next piece
 	if pause == false then
-		love.graphics.draw(nextpieceimg[nextpiece], 136*scale, 120*scale, nextpiecerot, 1, 1, piececenterpreview[nextpiece][1]*scale, piececenterpreview[nextpiece][2]*scale)
+		drawpiecepreview(nextpiece, 136, 120, nextpiecerot, scale)
 	end
 	
 	----------------
@@ -374,16 +371,12 @@ function rebuildpiece(index, shapes, shapegroups, numberofgroups) --gives the pi
 	piece.shapes = {}
 	piece.fixtures = {}
 	addgroupfixtures(piece, index, shapes, shapegroups, 1)
-	
-	--keep the uncut image for the other groups before cutting this one
-	local backupimagedata = love.image.newImageData(piece.imagedata:getWidth(), piece.imagedata:getHeight())
-	backupimagedata:paste(piece.imagedata, 0, 0, 0, 0, piece.imagedata:getWidth(), piece.imagedata:getHeight())
-	cutimage(index)
+	piece.cut = true
 	enforceminmass(piece)
 	
 	for a = 2, numberofgroups do
 		local n = highestbody()+1
-		local newpiece = {kind = piece.kind, center = piece.center, shapes = {}, fixtures = {}}
+		local newpiece = {kind = piece.kind, offset = piece.offset, cut = true, shapes = {}, fixtures = {}}
 		tetris[n] = newpiece
 		newpiece.body = love.physics.newBody(world, piece.body:getX(), piece.body:getY(), "dynamic")
 		newpiece.body:setAngle(piece.body:getAngle())
@@ -394,9 +387,6 @@ function rebuildpiece(index, shapes, shapegroups, numberofgroups) --gives the pi
 		newpiece.body:setBullet(true)
 		newpiece.body:setAngularVelocity(piece.body:getAngularVelocity())
 		
-		newpiece.imagedata = love.image.newImageData(backupimagedata:getWidth(), backupimagedata:getHeight())
-		newpiece.imagedata:paste(backupimagedata, 0, 0, 0, 0, backupimagedata:getWidth(), backupimagedata:getHeight())
-		cutimage(n)
 		enforceminmass(newpiece)
 	end
 end
@@ -426,32 +416,6 @@ function enforceminmass(piece) --tiny cut off bits get heavier so they don't fly
 			fixture:setDensity( 1 )
 		end
 	end
-end
-
-function cutimage(bodyid) --makes the pixels of a piece's image that aren't covered by its fixtures transparent
-	local piece = tetris[bodyid]
-	local width = piece.imagedata:getWidth()
-	local height = piece.imagedata:getHeight()
-	
-	for y = 0, height-1 do
-		for x = 0, width-1 do
-			local worldx, worldy = piece.body:getWorldPoint((x-width/2+.5)*(4/scale), (y-height/2+.5)*(4/scale))
-			local deletepixel = true
-			
-			for i, fixture in pairs(piece.fixtures) do
-				if fixture:testPoint( worldx, worldy ) then
-					deletepixel = false
-					break
-				end
-			end
-			
-			if deletepixel then
-				piece.imagedata:setPixel(x, y, 1, 1, 1, 0)
-			end
-		end
-	end
-	
-	piece.image = love.graphics.newImage( piece.imagedata )
 end
 
 function refineshape(line, mult, body, shape) --cuts a shape at a line, keeping the part above it (mult 1) or below it (mult -1). returns the new shape local to body, or nil if too small
@@ -665,19 +629,12 @@ function clearfulllines() --scores and removes every line that is full enough. r
 	return true
 end
 
-function snapshotpieces() --saves position, angle, kind and image of each piece so they can be drawn unchanged while the cleared lines blink
-	tetricutpos = {}
-	tetricutang = {}
-	tetricutcenter = {}
-	tetricutimg = {}
-	
+function snapshotpieces() --saves how each piece looks so they can be drawn unchanged while the cleared lines blink
+	tetricut = {}
 	for i, piece in pairs(tetris) do
 		if piece then
-			table.insert(tetricutpos, piece.body:getX())
-			table.insert(tetricutpos, piece.body:getY())
-			table.insert(tetricutang, piece.body:getAngle())
-			table.insert(tetricutcenter, piece.center or piececenter[piece.kind])
-			table.insert(tetricutimg, love.graphics.newImage(piece.imagedata))
+			table.insert(tetricut, {kind = piece.kind, x = piece.body:getX(), y = piece.body:getY(), angle = piece.body:getAngle(),
+				offset = piece.offset, clip = (piece.cut or piece.offset) and piecepolygons(piece) or nil})
 		end
 	end
 end

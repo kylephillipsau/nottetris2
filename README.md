@@ -36,6 +36,7 @@ Volume, colour, window scale and fullscreen, plus **Softbody**: each block of a 
 - `main.lua` – startup, asset loading, options/highscore files and the screen registry
 - `controls.lua` – key bindings
 - `game.lua` – pieces, walls, steering and drawing shared by the game modes
+- `pieceart.lua` – the pieces' vector art (coloured rectangles in a Mesh per piece kind, recoloured with the colour option)
 - `softbody.lua` – soft body pieces (the Softbody option)
 - `gameA.lua` – "normal" mode, including cutting pieces when a line is cleared
 - `gameB.lua` – "stack" mode
