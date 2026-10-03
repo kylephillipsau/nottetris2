@@ -34,6 +34,12 @@ function updatephysics(dt)
 	end
 end
 
+function setsoftlevel(level) --soft pieces get stiffer as the game gets harder, so they no longer squeeze into gaps
+	if softworld then
+		softworld:setlevel(level)
+	end
+end
+
 function setcollisioncallback(callback) --callback(a, b) runs when two things start touching. a and b are fixtures or soft bodies; both have getUserData
 	world:setCallbacks(callback, nil, nil, nil)
 	if softworld then

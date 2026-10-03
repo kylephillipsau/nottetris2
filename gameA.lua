@@ -682,6 +682,7 @@ function scorelines(numberoflines) --score depends on the number of lines and ho
 	if math.floor(linescleared/10) > levelscore then
 		levelscore = levelscore + 1
 		difficulty_speed = 100 + levelscore*7
+		setsoftlevel(levelscore)
 		newlevelbeep = true
 	end
 end

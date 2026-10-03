@@ -1,10 +1,10 @@
 6aeb835ca9bc74f91c5b852ed0a4cebb  sa01_falling.png
-65b3b54869298f516245e4044c1d3b45  sa02_turning.png
-70114df9905f5ccc19615c3268875df2  sa03_moved.png
-5eb85e97846aef4f66954b7ddb3c8f14  sa04_stack.png
-ecbd76bbb0dc3a1a3f35f2bb30159641  sa05_later.png
-ebc778072af62bf3cc04fcfd7df07d0f  sa06_failed.png
+ae1253e03e1d6e096255af6b49b78f74  sa02_turning.png
+921448a3191a519167262381ee04ce41  sa03_moved.png
+c2f6e2c77408323d372a6227f18dd91e  sa04_stack.png
+56604d28799b079751d3b33e6f827220  sa05_later.png
+5d2191cf065d86bff3d9e98d89c8e13e  sa06_failed.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 4740f2cb09f10ea903540a33f159f351  options.txt
-4fada932644bec89dcf2201b531dd375  sa_d1.txt
-6167e8575806c5b162f12eee9f20525b  sa_d2.txt
+f915922fb620bc0fd0098f166d9e210a  sa_d1.txt
+2a2463cceb70973b670e083fd86adfbd  sa_d2.txt

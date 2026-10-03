@@ -12,7 +12,9 @@
 
 SOFTCELLS = 2 --lattice cells along each block edge; more bend more smoothly but cost more (at most 3, see SOFTMAXPARTICLES)
 SOFTSUBSTEPS = 5 --solver substeps per step
-SOFTSTIFFNESS = 1500 --how hard the rubber resists stretching, per unit of density; lower is floppier
+SOFTSTIFFNESS = 4000 --how hard the rubber resists stretching at the start, per unit of density; lower is floppier
+SOFTHARDENING = 1.2 --each level (see SoftWorld:setlevel) multiplies the stiffness by this: floppy pieces squeeze into gaps, so stiffer is harder
+SOFTSTIFFNESSMAX = 16000 --and it never gets stiffer than this
 SOFTBULK = 4 --how much harder it resists being squashed than stretched
 SOFTVISCOSITY = 0.01 --how much the rubber resists changing shape quickly (seconds): absorbs impacts and stops fast jiggling
 SOFTWOBBLE = 0.05 --share of the wobble (motion other than moving and turning as a whole) damped each step
@@ -38,7 +40,7 @@ local SoftBody = {}
 SoftBody.__index = SoftBody
 
 function newsoftworld(gravity)
-	return setmetatable({gravity = gravity, bodies = {}, nextid = 0, touching = {}, callback = nil,
+	return setmetatable({gravity = gravity, bodies = {}, nextid = 0, touching = {}, callback = nil, stiffness = SOFTSTIFFNESS,
 		--contact candidates of the current step as parallel arrays: particle ci of body cp against
 		--the edge from particle ca to cb of body ce, with friction cf, for the pair with key ck
 		nc = 0, cp = {}, ci = {}, ce = {}, ca = {}, cb = {}, cf = {}, ck = {}}, SoftWorld)
@@ -102,7 +104,7 @@ local function finalize(body)
 	for i = 1, body.n do
 		m[i] = 0
 	end
-	local stiffness = SOFTSTIFFNESS*body.density
+	local stiffness = body.world.stiffness*body.density
 	body.alpha = stiffness > 0 and 1/stiffness or 0
 	local rx, ry = body.rx, body.ry
 	local edges, directed = {}, {}
@@ -216,6 +218,26 @@ function SoftWorld:newwall(x1, y1, x2, y2, data, friction, category)
 	finalize(body)
 	table.insert(self.bodies, body)
 	return body
+end
+
+--stiffens every body for a level of the game: stiffness SOFTSTIFFNESS*SOFTHARDENING^level, up to SOFTSTIFFNESSMAX
+function SoftWorld:setlevel(level)
+	local stiffness = math.min(SOFTSTIFFNESSMAX, SOFTSTIFFNESS*SOFTHARDENING^level)
+	if stiffness == self.stiffness then
+		return
+	end
+	local scale = self.stiffness/stiffness
+	self.stiffness = stiffness
+	for _, body in ipairs(self.bodies) do
+		if not body.static then
+			body.alpha = body.alpha*scale
+			for k = 1, body.ne do
+				body.ealpha[k] = body.ealpha[k]*scale
+			end
+			body.dscaleh = nil
+			body:wake() --so the stack settles into its new stiffness
+		end
+	end
 end
 
 function SoftWorld:remove(body)

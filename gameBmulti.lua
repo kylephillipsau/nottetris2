@@ -396,6 +396,7 @@ function endblockp1()
 		love.audio.play(sfx.blockfall)
 		linesscorep1 = linesscorep1 + 1
 		scorescorep1 = linesscorep1 * 100
+		setsoftlevel(math.floor(math.max(linesscorep1, linesscorep2)/10)) --soft pieces stiffen every 10 tiles the leader places
 		game_addTetriBmultip1()
 	end
 end
@@ -417,6 +418,7 @@ function endblockp2()
 		love.audio.play(sfx.blockfall)
 		linesscorep2 = linesscorep2 + 1
 		scorescorep2 = linesscorep2 * 100
+		setsoftlevel(math.floor(math.max(linesscorep1, linesscorep2)/10))
 		game_addTetriBmultip2()
 	end
 end

@@ -30,7 +30,7 @@ The page around the game is `web/page/index.html`. Every push to `master` publis
 Key bindings live in `controls.lua`.
 
 ## Options
-Volume, colour, window scale and fullscreen, plus **Softbody**: the pieces turn to rubber. Each piece is one soft body that bends, squashes and wobbles as a whole, and clearing a line cuts it like the rigid pieces. How stiff, springy and slippery the rubber is is set at the top of `softbody.lua`.
+Volume, colour, window scale and fullscreen, plus **Softbody**: the pieces turn to rubber. Each piece is one soft body that bends, squashes and wobbles as a whole, and clearing a line cuts it like the rigid pieces. Floppy pieces squeeze into gaps, which makes the game easier, so pieces get stiffer as it gets harder: with each level in normal mode, and every 10 tiles in stack and versus mode. How stiff, springy and slippery the rubber is, and how fast it stiffens, is set at the top of `softbody.lua`.
 
 ## Code layout
 - `main.lua` – startup, asset loading, options/highscore files and the screen registry
