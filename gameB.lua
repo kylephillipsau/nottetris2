@@ -148,6 +148,7 @@ function endblockB()
 		---------------------------
 		linesscore = linesscore + 1
 		scorescore = linesscore * 100
+		setsoftlevel(math.floor((linesscore - 40)/10)) --stack mode has no levels, so soft pieces stiffen every 10 tiles
 		
 		love.audio.stop(sfx.blockfall)
 		love.audio.play(sfx.blockfall)
