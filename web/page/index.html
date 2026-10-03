@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{{title}}</title>
 <meta name="description" content="Not Tetris 2 in your browser: Tetris, but the pieces are physics objects and lines are cut wherever they are full.">
 <meta name="theme-color" content="#15120f">
@@ -92,7 +92,7 @@
 	.wordmark span { color: var(--text); }
 	.tagline { margin: -8px 0 0; color: var(--muted); }
 	.touch-note { display: none; margin: 0; color: var(--muted); font-size: 12px; }
-	@media (hover: none) and (pointer: coarse) { .touch-note { display: block; } }
+	body.touch .touch-note { display: block; }
 	.progress {
 		width: min(260px, 70%);
 		height: 8px;
@@ -156,9 +156,85 @@
 		:root { --controls-height: 150px; }
 		body { padding: 12px 8px; }
 	}
+
+	/* on-screen controls, for phones and tablets: a touch screen (coarse pointer, no hover) that is small
+	   enough. the script checks the same and adds the touch class */
+	.play-area { display: contents; }
+	.pad { display: none; }
+	body.touch {
+		touch-action: manipulation;
+		-webkit-user-select: none;
+		user-select: none;
+		-webkit-touch-callout: none;
+		padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+		gap: 8px;
+	}
+	body.touch .controls ul, body.touch .versus { display: none; }
+	body.touch .play-area {
+		display: grid;
+		width: 100%;
+		max-width: 640px;
+		grid-template-columns: 1fr 1fr;
+		grid-template-areas: "stage stage" "move act";
+		align-items: center;
+		gap: 12px;
+	}
+	body.touch .stage {
+		grid-area: stage;
+		height: min(calc(100svh - 300px), calc((100vw - 16px) * 0.9));
+	}
+	body.touch .pad { display: grid; gap: 10px; touch-action: none; }
+	.pad-move { grid-area: move; justify-self: start; grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); }
+	.pad-act { grid-area: act; justify-self: end; grid-template-columns: 72px 72px; grid-template-rows: 34px 72px 72px; align-items: center; }
+	.pad button {
+		font: 700 15px/1 ui-monospace, Menlo, Consolas, monospace;
+		color: var(--text);
+		background: var(--panel);
+		border: 1px solid var(--line);
+		border-bottom-width: 3px;
+		border-radius: 12px;
+		padding: 0;
+		width: 100%;
+		height: 100%;
+		touch-action: none;
+		-webkit-tap-highlight-color: transparent;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.pad button.held { background: var(--brown); border-color: var(--tan); transform: translateY(1px); }
+	.pad svg { width: 26px; height: 26px; fill: currentColor; }
+	.pad-move .up { grid-area: 1 / 2; }
+	.pad-move .left { grid-area: 2 / 1; }
+	.pad-move .right { grid-area: 2 / 3; }
+	.pad-move .down { grid-area: 3 / 2; }
+	.pad-act .start, .pad-act .back { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 17px; color: var(--muted); }
+	.pad-act .back { grid-area: 1 / 1; }
+	.pad-act .start { grid-area: 1 / 2; }
+	.pad-act .rotl, .pad-act .rotr { border-radius: 50%; color: #000; background: var(--tan); border-color: #000; }
+	.pad-act .rotl { grid-area: 3 / 1; }
+	.pad-act .rotr { grid-area: 2 / 2; }
+	.pad-act .rotl.held, .pad-act .rotr.held { background: #dcb8a2; }
+	/* sideways, the controls go either side of the game */
+	@media (orientation: landscape) {
+		body.touch .play-area {
+			max-width: none;
+			grid-template-columns: auto 1fr auto;
+			grid-template-areas: "move stage act";
+		}
+		body.touch .stage { height: calc(100svh - 60px); min-height: 0; }
+		body.touch footer { display: none; }
+	}
 </style>
 </head>
 <body>
+	<div class="play-area">
+	<div class="pad pad-move" role="group" aria-label="Move">
+		<button class="up" data-keys="ArrowUp" aria-label="Up"><svg viewBox="0 0 24 24"><path d="M12 6l7 9H5z"/></svg></button>
+		<button class="left" data-keys="ArrowLeft" aria-label="Left"><svg viewBox="0 0 24 24"><path d="M6 12l9-7v14z"/></svg></button>
+		<button class="right" data-keys="ArrowRight" aria-label="Right"><svg viewBox="0 0 24 24"><path d="M18 12l-9 7V5z"/></svg></button>
+		<button class="down" data-keys="ArrowDown" aria-label="Drop"><svg viewBox="0 0 24 24"><path d="M12 18l-7-9h14z"/></svg></button>
+	</div>
 	<main class="stage" id="stage">
 		<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
 		<div class="overlay" id="overlay">
@@ -167,9 +243,16 @@
 			<div class="progress" id="progress" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" hidden><div></div></div>
 			<button class="play" id="play" hidden>Play</button>
 			<p class="status" id="status">&nbsp;</p>
-			<p class="touch-note">Needs a keyboard.</p>
+			<p class="touch-note">Best on a keyboard. Touch controls work for one player, or player 2 in versus.</p>
 		</div>
 	</main>
+	<div class="pad pad-act" role="group" aria-label="Actions">
+		<button class="back" data-keys="Escape">Back</button>
+		<button class="start" data-keys="Enter">Start</button>
+		<button class="rotl" data-keys="z Numpad1" aria-label="Rotate left"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 1-6.6 9.3l1.9-.6A5 5 0 1 0 12 7v3L7.5 6 12 2z"/></svg></button>
+		<button class="rotr" data-keys="x Numpad2" aria-label="Rotate right"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 0 6.6 9.3l-1.9-.6A5 5 0 1 1 12 7v3l4.5-4L12 2z"/></svg></button>
+	</div>
+	</div>
 
 	<section class="controls" aria-label="Controls">
 		<ul>
@@ -252,6 +335,48 @@
 		canvas.addEventListener('webglcontextlost', function (e) {
 			e.preventDefault();
 			showError('The graphics context was lost. Reload the page to keep playing.');
+		});
+
+		// on-screen controls: a button holds down the keys in its data-keys while it is touched, as keyboard
+		// events the game reads like real ones (SDL looks at keyCode, key and code)
+		var KEYS = {
+			ArrowLeft: [37, 'ArrowLeft'], ArrowUp: [38, 'ArrowUp'], ArrowRight: [39, 'ArrowRight'], ArrowDown: [40, 'ArrowDown'],
+			Enter: [13, 'Enter'], Escape: [27, 'Escape'], z: [90, 'KeyZ'], x: [88, 'KeyX'],
+			Numpad1: [97, 'Numpad1', '1', 3], Numpad2: [98, 'Numpad2', '2', 3]
+		};
+		function sendKey(type, name) {
+			var k = KEYS[name];
+			var event = new KeyboardEvent(type, { key: k[2] || name, code: k[1], location: k[3] || 0, bubbles: true, cancelable: true });
+			Object.defineProperty(event, 'keyCode', { get: function () { return k[0]; } });
+			Object.defineProperty(event, 'which', { get: function () { return k[0]; } });
+			document.dispatchEvent(event);
+		}
+		var touchQuery = window.matchMedia('(hover: none) and (pointer: coarse) and (max-width: 1024px), (hover: none) and (pointer: coarse) and (max-height: 600px)');
+		function updateTouch() { document.body.classList.toggle('touch', touchQuery.matches); }
+		updateTouch();
+		if (touchQuery.addEventListener) touchQuery.addEventListener('change', updateTouch); else touchQuery.addListener(updateTouch);
+		Array.prototype.forEach.call(document.querySelectorAll('.pad button'), function (button) {
+			var keys = button.getAttribute('data-keys').split(' ');
+			var held = false;
+			function press(e) {
+				e.preventDefault();
+				try { button.setPointerCapture(e.pointerId); } catch (error) {} //keeps the key held if the finger slides off
+				if (held) return;
+				held = true;
+				button.classList.add('held');
+				if (!started) start();
+				keys.forEach(function (k) { sendKey('keydown', k); });
+				if (navigator.vibrate) navigator.vibrate(8);
+			}
+			function release() {
+				if (!held) return;
+				held = false;
+				button.classList.remove('held');
+				keys.forEach(function (k) { sendKey('keyup', k); });
+			}
+			button.addEventListener('pointerdown', press);
+			['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) { button.addEventListener(type, release); });
+			button.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 		});
 
 		var Module = {
