@@ -21,18 +21,17 @@ function gameA_load()
 	
 	--PHYSICS--
 	meter = 30
-	world = love.physics.newWorld(0, 500, true )
+	newphysics()
 
-	tetris = {} --pieces: {kind, body, shapes, fixtures, cut}. 1 is the falling piece
-	local wallbodies, wallshapes
-	wallbodies, wallshapes, wallfixtures = newwalls(world, {
+	tetris = {} --pieces (see newpiece), and cut pieces have cut set. 1 is the falling piece
+	wallfixtures = newwalls({
 		{points = {-8,-64, -8,672, 24,672, 24,-64}, data = {"left"}, friction = 0.00001},
 		{points = {352,-64, 352,672, 384,672, 384,-64}, data = {"right"}, friction = 0.00001},
 		{points = {24,640, 24,672, 352,672, 352,640}, data = {"ground"}},
 		{points = {-8,-96, 384,-96, 384,-64, -8,-64}, data = {"ceiling"}},
 	})
 
-	world:setCallbacks(collideA, nil, nil, nil)
+	setcollisioncallback(collideA)
 	-----------
 	
 	--FIRST "nextpiece"-
@@ -52,17 +51,8 @@ function game_addTetriA() --creates new block (using createtetriA) at 1 and sets
 end	
 
 function createtetriA(i, uniqueid, x, y) --creates a piece of kind i at index uniqueid of tetris
-	local piece
-	if softbody then
-		piece = newsoftpiece(world, i, x, y, 1)
-	else
-		piece = newpiece(world, i, x, y, 1)
-	end
-	tetris[uniqueid] = piece
-
-	for i, v in pairs(tetris[uniqueid].fixtures) do
-		v:setUserData({1})
-	end
+	tetris[uniqueid] = newpiece(i, x, y, 1)
+	setpiecedata(tetris[uniqueid], {1})
 end
 
 function gameA_draw()
@@ -74,13 +64,17 @@ function gameA_draw()
 	if cuttingtimer == lineclearduration then
 		for i, piece in pairs(tetris) do
 			if pause == false then
-				drawpiece(piece, physicsscale, scale)
+				drawpiece(piece, physicsscale)
 			end
 		end
 	else
 		for i, piece in ipairs(tetricut) do
 			if pause == false then
-				drawpieceart(piece.kind, piece.x*physicsscale, piece.y*physicsscale, piece.angle, physicsscale, piece.clip, piece.offset)
+				if piece.soft then
+					drawsoftpiece(piece.body, physicsscale)
+				else
+					drawpieceart(piece.kind, piece.x*physicsscale, piece.y*physicsscale, piece.angle, physicsscale, piece.clip)
+				end
 			end
 		end
 		
@@ -205,7 +199,7 @@ function gameA_update(dt)
 	
 	endblock = false
 
-	world:update(dt)
+	updatephysics(dt)
 
 	if endblock then
 		endblockA()
@@ -224,10 +218,8 @@ function gameA_update(dt)
 	if gamestate == "failingA" then
 		local clearcheck = true
 		for i, piece in pairs(tetris) do
-			for j, part in ipairs(pieceparts(piece)) do
-				if part.body:getY() < 648 then
-					clearcheck = false
-				end
+			if piecey(piece) < 648 then
+				clearcheck = false
 			end
 		end
 		
@@ -273,6 +265,9 @@ end
 
 function cutpiece(index, upperline, lowerline) --cuts the part of a piece between the lines away. returns true if nothing is left of it
 	local piece = tetris[index]
+	if piece.soft then
+		return cutsoftpiece(index, upperline, lowerline)
+	end
 	local newshapes, refined = splitshapes(piece, upperline, lowerline)
 	local removed = false
 	
@@ -297,6 +292,24 @@ function cutpiece(index, upperline, lowerline) --cuts the part of a piece betwee
 		shape:release()
 	end
 	return removed
+end
+
+function cutsoftpiece(index, upperline, lowerline) --the soft world cuts the body; each part left becomes a piece
+	local piece = tetris[index]
+	local parts = softworld:cut(piece.body, upperline, lowerline)
+	if parts[1] == piece.body then --missed
+		return false
+	end
+	if #parts == 0 then
+		table.remove(tetris, index)
+		return true
+	end
+	for a, part in ipairs(parts) do
+		local n = a == 1 and index or highestbody()+1
+		tetris[n] = {kind = piece.kind, soft = true, body = part}
+		setpiecedata(tetris[n], {n})
+	end
+	return false
 end
 
 function splitshapes(piece, upperline, lowerline) --returns the piece's shapes with the part between the lines removed (local to its body), and whether any shape was cut
@@ -376,7 +389,7 @@ function rebuildpiece(index, shapes, shapegroups, numberofgroups) --gives the pi
 	
 	for a = 2, numberofgroups do
 		local n = highestbody()+1
-		local newpiece = {kind = piece.kind, offset = piece.offset, cut = true, shapes = {}, fixtures = {}}
+		local newpiece = {kind = piece.kind, cut = true, shapes = {}, fixtures = {}}
 		tetris[n] = newpiece
 		newpiece.body = love.physics.newBody(world, piece.body:getX(), piece.body:getY(), "dynamic")
 		newpiece.body:setAngle(piece.body:getAngle())
@@ -495,8 +508,13 @@ function measurelines() --linearea[line] = area covered by landed pieces in each
 	end
 	
 	for i = 2, highestbody() do
-		for j, shape in pairs(tetris[i].shapes) do
-			addshapelineareas(shape, tetris[i].body)
+		local piece = tetris[i]
+		if piece.soft then
+			piece.body:addlineareas(linearea, 18, 32)
+		else
+			for j, shape in pairs(piece.shapes) do
+				addshapelineareas(shape, piece.body)
+			end
 		end
 	end
 end
@@ -633,8 +651,12 @@ function snapshotpieces() --saves how each piece looks so they can be drawn unch
 	tetricut = {}
 	for i, piece in pairs(tetris) do
 		if piece then
-			table.insert(tetricut, {kind = piece.kind, x = piece.body:getX(), y = piece.body:getY(), angle = piece.body:getAngle(),
-				offset = piece.offset, clip = (piece.cut or piece.offset) and piecepolygons(piece) or nil})
+			if piece.soft then --cutting replaces cut soft bodies with new ones, and nothing moves while the lines blink, so the bodies themselves will do
+				table.insert(tetricut, {soft = true, body = piece.body})
+			else
+				table.insert(tetricut, {kind = piece.kind, x = piece.body:getX(), y = piece.body:getY(), angle = piece.body:getAngle(),
+					clip = piece.cut and piecepolygons(piece) or nil})
+			end
 		end
 	end
 end
@@ -827,17 +849,11 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 						wallfixtures[2] = nil
 					end
 				else
-					--move the landed piece (each block of a soft piece separately) from 1 to the end of tetris
-					local landed = pieceparts(tetris[1])
+					--move the landed piece from 1 to the end of tetris
+					local n = highestbody()+1
+					tetris[n] = tetris[1]
 					tetris[1] = nil
-					for i, piece in ipairs(landed) do
-						local n = highestbody()+1
-						tetris[n] = piece
-						piece.body:setLinearDamping(0.5)
-						for j, v in pairs(piece.fixtures) do
-							v:setUserData({n})
-						end
-					end
+					setpiecedata(tetris[n], {n})
 
 					endblock = true
 				end

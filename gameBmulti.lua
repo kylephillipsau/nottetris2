@@ -54,25 +54,24 @@ function gameBmulti_load()
 	
 	--PHYSICS--
 	meter = 30
-	world = love.physics.newWorld(0, 500, true )
+	newphysics()
 
 
 	multipieces = {{}, {}} --pieces of player 1 and 2, indexed by counterp1/counterp2
 
 	--WALLS--
-	local wallbodiesp1, wallshapesp1, wallbodiesp2, wallshapesp2
-	wallbodiesp1, wallshapesp1, wallfxturesp1 = newwalls(world, {
+	wallfxturesp1 = newwalls({
 		{points = {164,0, 164,672, 196,672, 196,0}, data = "leftp1", friction = 0.0001},
 		{points = {516,0, 516,672, 548,672, 548,0}, data = "rightp1", friction = 0.0001, category = 2},
 		{points = {196,640, 196,672, 516,672, 516,640}, data = "groundp1"},
 	})
-	wallbodiesp2, wallshapesp2, wallfxturesp2 = newwalls(world, {
+	wallfxturesp2 = newwalls({
 		{points = {484,0, 484,672, 516,672, 516,0}, data = "leftp2", friction = 0.0001, category = 3},
 		{points = {836,0, 836,672, 868,672, 868,0}, data = "rightp2", friction = 0.0001},
 		{points = {516,640, 516,672, 836,672, 836,640}, data = "groundp2"},
 	})
 	-----------
-	world:setCallbacks(collideBmulti, nil, nil, nil)
+	setcollisioncallback(collideBmulti)
 	-----------
 	
 	randomtable[1] = math.random(7)
@@ -175,7 +174,7 @@ function gameBmulti_update(dt)
 	--collisions only flag finished blocks; bodies can't be created while the world is updating
 	endblockp1pending = false
 	endblockp2pending = false
-	world:update(dt)
+	updatephysics(dt)
 	if endblockp1pending then
 		endblockp1()
 	end
@@ -233,10 +232,8 @@ end
 function piecesfallenout() --true once both players' pieces have dropped out of the playfield
 	for player = 1, 2 do
 		for i, piece in pairs(multipieces[player]) do
-			for j, part in ipairs(pieceparts(piece)) do
-				if part.body:getY() < 162*mpscale then
-					return false
-				end
+			if piecey(piece) < 162*mpscale then
+				return false
 			end
 		end
 	end
@@ -342,32 +339,22 @@ function game_addTetriBmultip2()
 end
 
 function createtetriBmulti(player, i, uniqueid, x, y)
-	local piece
-	if softbody then
-		piece = newsoftpiece(world, i, x, y, 1)
-	else
-		piece = newpiece(world, i, x, y, 1)
-	end
+	local piece = newpiece(i, x, y, 1)
 	multipieces[player][uniqueid] = piece
-
-	for i, v in pairs(piece.fixtures) do
-		v:setUserData("p"..player.."-"..uniqueid)
-		v:setMask(player == 1 and 3 or 2) --don't collide with the other player's side of the shared middle wall
-	end
+	setpiecedata(piece, "p"..player.."-"..uniqueid)
+	setpiecemask(piece, player == 1 and 3 or 2) --don't collide with the other player's side of the shared middle wall
 end
 
 function drawmultipieces(player, color) --draws a player's pieces, tinting those below the rising game over line
 	for i, piece in pairs(multipieces[player]) do
-		for j, part in ipairs(pieceparts(piece)) do --each block of a soft piece is tinted on its own
-			love.graphics.setColor(1, 1, 1)
-			if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
-				local timepassed = love.timer.getTime() - colorizetimer
-				if part.body:getY() > 576 - (576*(timepassed/colorizeduration)) then
-					love.graphics.setColor(unpack(color))
-				end
+		love.graphics.setColor(1, 1, 1)
+		if gamestate == "failingBmulti" or gamestate == "failedBmulti" then
+			local timepassed = love.timer.getTime() - colorizetimer
+			if piecey(piece) > 576 - (576*(timepassed/colorizeduration)) then
+				love.graphics.setColor(unpack(color))
 			end
-			drawpiece(part, physicsmpscale, mpscale)
 		end
+		drawpiece(piece, physicsmpscale)
 	end
 end
 
@@ -393,9 +380,7 @@ end
 
 function endblockp1()
 	if gameno == 2 then
-		for i, v in pairs(multipieces[1][counterp1].fixtures) do --make fixtures pass through the center
-			v:setMask(3, 2)
-		end
+		setpiecemask(multipieces[1][counterp1], 3, 2) --pass through the center
 	end
 	
 	if piecey(multipieces[1][counterp1]) < losingY then --P1 hit the top
@@ -417,9 +402,7 @@ end
 
 function endblockp2()
 	if gameno == 2 then
-		for i, v in pairs(multipieces[2][counterp2].fixtures) do --make fixtures pass through the center
-			v:setMask(2, 3)
-		end
+		setpiecemask(multipieces[2][counterp2], 2, 3) --pass through the center
 	end
 	
 	if piecey(multipieces[2][counterp2]) < losingY then --P2 hit the top

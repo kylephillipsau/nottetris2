@@ -2,31 +2,27 @@
 -- to be half full to clear, so soft blocks land, wobble, get cut and fall apart.
 local current, target = nil, 224
 
-local function center(piece) --average position of a piece's blocks
-	local x, y, parts = 0, 0, piece.blocks or {piece}
-	for _, part in ipairs(parts) do
-		x, y = x + part.body:getX()/#parts, y + part.body:getY()/#parts
-	end
-	return x, y
+local function center(piece)
+	return piece.body:getWorldCenter()
 end
 
 local function velocity(piece)
-	local vx, parts = 0, piece.blocks or {piece}
-	for _, part in ipairs(parts) do
-		vx = vx + select(1, part.body:getLinearVelocity())/#parts
-	end
-	return vx
+	return (piece.body:getLinearVelocity())
 end
 
-local function stacktop(x)
+local function stacktop(x) --highest edge of a landed soft piece above x
 	local top = 576
-	world:rayCast(x, -200, x, 576, function(fixture, hx, hy)
-		local data = fixture:getUserData()
-		if type(data) == "table" and type(data[1]) == "number" and data[1] ~= 1 and hy < top then
-			top = hy
+	for i = 2, table.maxn(tetris) do
+		local b = tetris[i] and tetris[i].body
+		if b then
+			for e = 1, b.nbe do
+				local ax, ay, bx, by = b.x[b.ba[e]], b.y[b.ba[e]], b.x[b.bb[e]], b.y[b.bb[e]]
+				if (ax <= x) ~= (bx <= x) then
+					top = math.min(top, ay + (x - ax)/(bx - ax)*(by - ay))
+				end
+			end
 		end
-		return 1
-	end)
+	end
 	return top
 end
 

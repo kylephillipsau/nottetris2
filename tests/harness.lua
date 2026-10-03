@@ -85,12 +85,15 @@ love.update = function(dt)
 			for _, list in ipairs({tetris or {}, multipieces and multipieces[1] or {}, multipieces and multipieces[2] or {}}) do
 				for i = 1, table.maxn(list) do
 					local piece = list[i]
-					if piece then
-						for j, part in ipairs(piece.blocks or {piece}) do --a falling soft piece is a group of blocks
-							local b = part.body
-							table.insert(lines, string.format("%d%s kind %d shapes %d pos %.6f %.6f angle %.6f vel %.6f %.6f",
-								i, piece.blocks and "." .. j or "", part.kind, #part.shapes, b:getX(), b:getY(), b:getAngle(), b:getLinearVelocity()))
-						end
+					if piece and piece.soft then
+						local b = piece.body
+						local vx, vy = b:getLinearVelocity()
+						table.insert(lines, string.format("%d kind %d particles %d elements %d centre %.6f %.6f vel %.6f %.6f%s",
+							i, piece.kind, b.n, b.ne, b:getX(), b:getY(), vx, vy, b.awake and "" or " asleep"))
+					elseif piece then
+						local b = piece.body
+						table.insert(lines, string.format("%d kind %d shapes %d pos %.6f %.6f angle %.6f vel %.6f %.6f",
+							i, piece.kind, #piece.shapes, b:getX(), b:getY(), b:getAngle(), b:getLinearVelocity()))
 					end
 				end
 				table.insert(lines, "--")
