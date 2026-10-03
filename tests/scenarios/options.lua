@@ -9,5 +9,7 @@ return {
 	{call=function(log) log("fullscreen", tostring(fullscreen), love.window.getFullscreen(), love.graphics.getDimensions()) end},
 	{press="right"}, {wait=1},
 	{call=function(log) log("fullscreen", tostring(fullscreen), love.window.getFullscreen(), love.graphics.getDimensions()) end},
+	{press="down"}, {press="left"}, {wait=0.3}, {shot="o045_softbody"}, {wait=0.1},
+	{call=function(log) log("softbody", softbody) end},
 	{press="escape"}, {state="title"}, {wait=0.5}, {shot="o05_title_after"}, {quit=true},
 }

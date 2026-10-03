@@ -11,6 +11,7 @@ function love.load()
 	--requires--
 	require "controls"
 	require "game"
+	require "softbody"
 	require "gameB"
 	require "gameBmulti"
 	require "gameA"
@@ -98,7 +99,7 @@ function love.load()
 	losingY = 0 --lose if block 1 collides above this line
 	minmass = 1
 	
-	optionschoices = {"volume", "color", "scale", "fullscrn"}
+	optionschoices = {"volume", "color", "scale", "fullscrn", "softbody"}
 	
 	piececenter = {}
 	piececenter[1] = {17, 5}
@@ -396,6 +397,9 @@ function loadoptions()
 				else
 					fullscreen = false
 				end	
+			
+			elseif split2[1] == "softbody" then
+				softbody = split2[2] == "true"
 			end
 		end
 		
@@ -407,6 +411,9 @@ function loadoptions()
 		end
 		if fullscreen == nil then
 			fullscreen = false
+		end
+		if softbody == nil then
+			softbody = false
 		end
 		
 		if scale == nil then
@@ -420,6 +427,7 @@ function loadoptions()
 		autosize()
 		scale = suggestedscale
 		fullscreen = false
+		softbody = false
 	end
 	
 	saveoptions()
@@ -432,6 +440,7 @@ function saveoptions()
 	s = s .. "hue=" .. hue .. "\n"
 	s = s .. "scale=" .. scale .. "\n"
 	s = s .. "fullscreen=" .. tostring(fullscreen) .. "\n"
+	s = s .. "softbody=" .. tostring(softbody) .. "\n"
 	
 	love.filesystem.write("options.txt", s)
 end

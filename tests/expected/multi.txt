@@ -5,4 +5,4 @@ bade4b7709e350a44f07a438485c925e  m04_mid.png
 b4975267e8b23a53e5eaaead55deebcc  m05_results.png
 9a6314b41c2cec7b09a15aabb0e42907  m06_back.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
-80c293503c1d6f537142fe54cbbafe75  options.txt
+4740f2cb09f10ea903540a33f159f351  options.txt

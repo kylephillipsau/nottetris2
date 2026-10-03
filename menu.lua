@@ -392,6 +392,13 @@ function options_draw()
 		love.graphics.print("no", 133*scale, 66*scale, 0, scale)
 	end
 	
+	--soft body pieces
+	if softbody then
+		love.graphics.print("yes", 96*scale, 82*scale, 0, scale)
+	else
+		love.graphics.print("no", 133*scale, 82*scale, 0, scale)
+	end
+	
 	if selectblink then
 		love.graphics.print(optionschoices[optionsselection], 19*scale, 18*scale+(optionsselection-1)*16*scale, 0, scale)
 	end
@@ -444,6 +451,9 @@ function options_keypressed(key)
 				togglefullscreen(true)
 			end
 		
+		elseif optionsselection == 5 then
+			softbody = true
+		
 		end
 		
 	elseif controls.check("right", key) then
@@ -466,6 +476,9 @@ function options_keypressed(key)
 				togglefullscreen(false)
 			end
 			
+		elseif optionsselection == 5 then
+			softbody = false
+			
 		end
 		
 	elseif controls.check("return", key) then
@@ -486,6 +499,8 @@ function options_keypressed(key)
 			if fullscreen == true then
 				togglefullscreen(false)
 			end
+		elseif optionsselection == 5 then
+			softbody = false
 		end
 		
 	end

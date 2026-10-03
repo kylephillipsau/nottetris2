@@ -6,4 +6,4 @@ a580f13af8636dd1e24c36310c307082  b05_after.png
 c0ae4f5b219b9325d40d9638fa3dd7ad  b06_end.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 657258463f0072741b4410fdbde766d8  highscoresB.txt
-80c293503c1d6f537142fe54cbbafe75  options.txt
+4740f2cb09f10ea903540a33f159f351  options.txt

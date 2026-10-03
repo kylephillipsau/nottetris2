@@ -11,4 +11,4 @@ a06a228f7043336d7e0f55dc627ec9bb  10_end.png
 9f5962e88544a9c48614a2f8a8cf6c3c  d05_gameA_mid.txt
 b1ead4c489eaa588a7511de543f4c638  d06_gameA_late.txt
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
-80c293503c1d6f537142fe54cbbafe75  options.txt
+4740f2cb09f10ea903540a33f159f351  options.txt

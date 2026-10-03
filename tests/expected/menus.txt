@@ -9,4 +9,4 @@ e845ebcd4cd7443499d781f5a8277743  n07_back_to_game.png
 ec1ce3e2c9e0075192342cf3336d2c86  n09_multi_off.png
 552c95f4709bbe94e903717433408461  n10_multi_invade.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
-80c293503c1d6f537142fe54cbbafe75  options.txt
+4740f2cb09f10ea903540a33f159f351  options.txt

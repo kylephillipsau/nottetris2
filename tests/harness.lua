@@ -83,9 +83,11 @@ love.update = function(dt)
 				for i = 1, table.maxn(list) do
 					local piece = list[i]
 					if piece then
-						local b = piece.body
-						table.insert(lines, string.format("%d kind %d shapes %d pos %.6f %.6f angle %.6f vel %.6f %.6f",
-							i, piece.kind, #piece.shapes, b:getX(), b:getY(), b:getAngle(), b:getLinearVelocity()))
+						for j, part in ipairs(piece.blocks or {piece}) do --a falling soft piece is a group of blocks
+							local b = part.body
+							table.insert(lines, string.format("%d%s kind %d shapes %d pos %.6f %.6f angle %.6f vel %.6f %.6f",
+								i, piece.blocks and "." .. j or "", part.kind, #part.shapes, b:getX(), b:getY(), b:getAngle(), b:getLinearVelocity()))
+						end
 					end
 				end
 				table.insert(lines, "--")
