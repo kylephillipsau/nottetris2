@@ -1,8 +1,8 @@
-2b50460f30ac2f7d98c312c932108638  o01_options.png
-a062c9b9ebb46fc7f34c26adb63d5268  o02_hue.png
-2c54b03ab5cc77b44498378d602dc1a2  o03_scale_down.png
+c9445c5dfcac32e0057198647e27f38d  o01_options.png
+0c2a95e2587c773c5506368f24c79687  o02_hue.png
+983ebd1528a0b42b217b4817f75e3c12  o03_scale_down.png
 deb5f48e1785c6dd8e29b2a5cf07af0a  o045_softbody.png
-c87e6286536f01d8d6092935ea160756  o04_fullscreen.png
+7565d4d8a178e8ca2b19933c91abeb33  o04_fullscreen.png
 2a197d107afd8b275319a6f864706439  o05_title_after.png
 e7b8b0b4c17831aaac52315dd625c17d  highscoresA.txt
 58c2d880690a811ce8015c2abed68cbc  options.txt
