@@ -83,7 +83,7 @@ local function stencilpolygons(polygons)
 	end
 end
 
---draws a piece kind's art with the piece origin at x, y (screen), rotated by angle, s screen pixels per unit.
+--draws a piece kind's art in the current colour with the piece origin at x, y (screen), rotated by angle, s screen pixels per unit.
 --clip: optional list of polygons to clip the art to (cut pieces), in the same coordinates as x, y, angle place.
 --offset: optional {x, y} where those coordinates' origin is in the piece (single blocks of soft pieces)
 function drawpieceart(kind, x, y, angle, s, clip, offset)
@@ -91,7 +91,6 @@ function drawpieceart(kind, x, y, angle, s, clip, offset)
 	love.graphics.translate(x, y)
 	love.graphics.rotate(angle)
 	love.graphics.scale(s)
-	love.graphics.setColor(1, 1, 1)
 	if clip then
 		love.graphics.stencil(stencilpolygons(clip), "replace", 1)
 		love.graphics.setStencilTest("greater", 0)
@@ -122,7 +121,6 @@ function drawpiecepreview(kind, x, y, angle, scale) --the rotating "next piece",
 	love.graphics.rotate(angle)
 	love.graphics.scale(scale/PIECEPIXEL)
 	love.graphics.translate(-ox, -oy)
-	love.graphics.setColor(1, 1, 1)
 	love.graphics.draw(pieceart[kind])
 	love.graphics.pop()
 end

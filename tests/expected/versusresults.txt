@@ -1,6 +1,7 @@
 524f73be99ddb1cde0ca299043055563  r1_mario_a.png
 e0d3c3a1c94555aafc576945f6444f63  r1_mario_b.png
 1e71f94d994e2de2e1cba9ab29ee7dc2  r1_mario_c.png
+43fd9abd3a28754d1b91c38f9c356bb3  r1_mario_colorize.png
 878b028b382bdca23e9369245bb7aef7  r1_mario_menu.png
 64f56fd4be4321a14b43e9cca692c145  r2_luigi_a.png
 3a7f1be30e524eff272ee249684314e7  r2_luigi_b.png
