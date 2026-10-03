@@ -30,14 +30,14 @@ The page around the game is `web/page/index.html`. Every push to `master` publis
 Key bindings live in `controls.lua`.
 
 ## Options
-Volume, colour, window scale and fullscreen, plus **Softbody**: each block of a piece becomes its own body joined to its neighbours by springy joints, so pieces bend and wobble. Its stiffness is set at the top of `softbody.lua`.
+Volume, colour, window scale and fullscreen, plus **Softbody**: the pieces turn to rubber. Each piece is one soft body that bends, squashes and wobbles as a whole, and clearing a line cuts it like the rigid pieces. How stiff, springy and slippery the rubber is is set at the top of `softbody.lua`.
 
 ## Code layout
 - `main.lua` – startup, asset loading, options/highscore files and the screen registry
 - `controls.lua` – key bindings
 - `game.lua` – pieces, walls, steering and drawing shared by the game modes
-- `pieceart.lua` – the pieces' vector art (coloured rectangles in a Mesh per piece kind, recoloured with the colour option)
-- `softbody.lua` – soft body pieces (the Softbody option)
+- `pieceart.lua` – the pieces' vector art (coloured rectangles in a Mesh per piece kind, recoloured with the colour option). Soft pieces have a design with one outline around the whole piece, and a vertex shader bends their art with the lattice
+- `softbody.lua` – the soft body engine behind the Softbody option: each piece is a lattice of particles held in shape by compliant constraints, solved with XPBD in substeps, with contacts and friction, sleeping and cutting along cleared lines
 - `gameA.lua` – "normal" mode, including cutting pieces when a line is cleared
 - `gameB.lua` – "stack" mode
 - `gameBmulti.lua` – versus mode
@@ -46,4 +46,4 @@ Volume, colour, window scale and fullscreen, plus **Softbody**: each block of a 
 Each screen file registers the gamestates it handles with `registerscreen`, and `love.update`/`draw`/`keypressed` forward to the current one.
 
 ## Tests
-`tests/run.sh` plays scripted scenarios for every mode headless (needs `love` and `xvfb-run`) with a fixed clock and random seed, and compares screenshots against `tests/expected`. Run it after changes to check behaviour hasn't changed; `tests/run.sh --update` records a new baseline when a visual change is intended. Screenshots and logs end up in `tests/out/`.
+`tests/run.sh` plays scripted scenarios for every mode headless (needs `love` and `xvfb-run`) with a fixed clock and random seed, and compares screenshots against `tests/expected`. Run it after changes to check behaviour hasn't changed; `tests/run.sh --update` records a new baseline when a visual change is intended. Screenshots and logs end up in `tests/out/`; `softbend` tiles the frames of a soft piece bending into one image, handy when tuning the rubber.

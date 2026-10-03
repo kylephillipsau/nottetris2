@@ -308,6 +308,7 @@ function cutsoftpiece(index, upperline, lowerline) --the soft world cuts the bod
 		local n = a == 1 and index or highestbody()+1
 		tetris[n] = {kind = piece.kind, soft = true, body = part}
 		setpiecedata(tetris[n], {n})
+		preparesoftart(part)
 	end
 	return false
 end

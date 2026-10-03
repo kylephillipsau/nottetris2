@@ -117,14 +117,15 @@ end
 
 function loadpieceart() --builds one Mesh of coloured triangles per piece kind, in the classic and the soft design
 	local palette = piecepalette()
-	pieceart, softpreviewart = {}, {}
-	softpieceart = {} --built when first needed, as soft bodies of each kind are
+	pieceart, softpreviewart, softpieceart = {}, {}, {}
 	if not skinshader then
 		skinshader = love.graphics.newShader(string.format(SKINSHADER, SOFTMAXPARTICLES))
 	end
+	local lattices = newsoftworld(0) --uncut soft bodies of a kind all have the same lattice, so they share their art
 	for kind = 1, 7 do
 		pieceart[kind] = rectmesh(pieceartrects(kind), palette)
 		softpreviewart[kind] = rectmesh(pieceartrects(kind, true), palette)
+		softpieceart[kind] = buildsoftart(lattices:newpiece(kind, 0, 0, 1))
 	end
 end
 
@@ -264,16 +265,17 @@ function buildsoftart(body) --a Mesh of the body's kind's art, cut along its ele
 	return love.graphics.newMesh(SKINFORMAT, vertices, "triangles", "static")
 end
 
+--gives a soft body its art. making a Mesh can stall the graphics for a moment, so cut bodies get theirs
+--when they are cut (while the cleared lines blink) rather than when they are first drawn
+function preparesoftart(body)
+	if body.art == nil then
+		body.art = body.cut and (buildsoftart(body) or false) or softpieceart[body.kind]
+	end
+end
+
 --draws a soft body in the current colour, s screen pixels per unit
 function drawsoftpiece(body, s)
-	if body.art == nil then
-		if body.cut then
-			body.art = buildsoftart(body) or false
-		else --uncut bodies of a kind have the same lattice, so they share their art
-			softpieceart[body.kind] = softpieceart[body.kind] or buildsoftart(body)
-			body.art = softpieceart[body.kind]
-		end
-	end
+	preparesoftart(body)
 	if not body.art then
 		return
 	end
