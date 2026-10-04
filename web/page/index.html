@@ -2,10 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{{title}}</title>
 <meta name="description" content="Not Tetris 2 in your browser: Tetris, but the pieces are physics objects and lines are cut wherever they are full.">
 <meta name="theme-color" content="#15120f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Not Tetris 2">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' shape-rendering='crispEdges'%3E%3Cg fill='%23d0a890' stroke='%23000' stroke-width='3'%3E%3Crect x='2' y='10' width='14' height='14'/%3E%3Crect x='17' y='10' width='14' height='14'/%3E%3Crect x='32' y='10' width='14' height='14'/%3E%3Crect x='17' y='25' width='14' height='14'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 	:root {
@@ -92,7 +98,7 @@
 	.wordmark span { color: var(--text); }
 	.tagline { margin: -8px 0 0; color: var(--muted); }
 	.touch-note { display: none; margin: 0; color: var(--muted); font-size: 12px; }
-	@media (hover: none) and (pointer: coarse) { .touch-note { display: block; } }
+	body.touch .touch-note { display: block; }
 	.progress {
 		width: min(260px, 70%);
 		height: 8px;
@@ -156,9 +162,156 @@
 		:root { --controls-height: 150px; }
 		body { padding: 12px 8px; }
 	}
+
+	/* on-screen controls for phones and tablets (a touch screen with no hover, up to tablet size; the script
+	   checks the same and adds the touch class). laid out like a handheld: in portrait the game sits on top
+	   and the controller below it, sideways the controls flank the game. everything is sized from the short
+	   side of the screen, so it scales from small phones to tablets, and the thumb controls sit low, where
+	   thumbs rest when holding the device */
+	.play-area { display: contents; }
+	.deck, .touch-only { display: none; }
+	.credit { margin: 0; font-size: 12px; color: #6f6258; }
+	.credit a { color: var(--muted); }
+	body.touch {
+		--dpad: clamp(132px, 40vmin, 228px); /* the D-pad's diameter */
+		--button: clamp(60px, 18vmin, 104px); /* the rotate buttons */
+		--gap: clamp(8px, 2.5vmin, 18px);
+		--inset-l: max(var(--gap), env(safe-area-inset-left));
+		--inset-r: max(var(--gap), env(safe-area-inset-right));
+		--inset-t: max(var(--gap), env(safe-area-inset-top));
+		--inset-b: max(var(--gap), env(safe-area-inset-bottom));
+		position: fixed;
+		inset: 0;
+		height: 100dvh;
+		padding: 0;
+		overflow: hidden;
+		overscroll-behavior: none;
+		touch-action: none;
+		-webkit-user-select: none;
+		user-select: none;
+		-webkit-touch-callout: none;
+		-webkit-tap-highlight-color: transparent;
+		display: block;
+	}
+	body.touch .controls, body.touch footer { display: none; }
+	body.touch .touch-only { display: block; }
+	body.touch .play-area {
+		display: grid;
+		height: 100%;
+		padding: var(--inset-t) var(--inset-r) var(--inset-b) var(--inset-l);
+		box-sizing: border-box;
+		gap: var(--gap);
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr);
+		grid-template-areas: "stage" "deck";
+	}
+	body.touch .stage {
+		grid-area: stage;
+		max-width: none;
+		width: 100%;
+		/* as wide as the screen, but leaving the controller its room */
+		height: min(calc((100vw - var(--inset-l) - var(--inset-r)) * 0.9), calc(100dvh - var(--dpad) - var(--button) - 5 * var(--gap) - var(--inset-t) - var(--inset-b)));
+		min-height: 0;
+	}
+	body.touch .deck {
+		grid-area: deck;
+		display: grid;
+		grid-template-columns: var(--dpad) 1fr calc(2 * var(--button) + var(--gap));
+		/* spare height goes between the game and the controls, so start and back sit just above the
+		   thumbs' controls and everything is in reach */
+		grid-template-rows: minmax(0, 1fr) auto auto;
+		grid-template-areas: ". . ." "system system system" "dpad . actions";
+		align-items: end;
+		gap: var(--gap);
+	}
+
+	/* the D-pad is one control: the direction comes from where the thumb is, so it can roll between
+	   directions, and diagonals press two at once (drop while moving). the middle is a dead zone */
+	.dpad {
+		grid-area: dpad;
+		position: relative;
+		width: var(--dpad);
+		height: var(--dpad);
+		border-radius: 50%;
+		background: radial-gradient(circle, var(--panel) 60%, transparent 61%);
+		touch-action: none;
+	}
+	.dpad svg { position: absolute; inset: 6%; width: 88%; height: 88%; }
+	.dpad .arm { fill: #2a231e; stroke: var(--line); stroke-width: 1.5; }
+	.dpad .arrow { fill: var(--muted); }
+	.dpad .held .arm { fill: var(--brown); stroke: var(--tan); }
+	.dpad .held .arrow { fill: var(--text); }
+
+	.actions {
+		grid-area: actions;
+		position: relative;
+		width: calc(2 * var(--button) + var(--gap));
+		height: calc(var(--button) * 1.6);
+	}
+	.actions button, .system button {
+		position: relative;
+		font: 700 clamp(10px, 2.6vmin, 14px)/1 ui-monospace, Menlo, Consolas, monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted);
+		background: var(--panel);
+		border: 1px solid var(--line);
+		border-bottom-width: 3px;
+		padding: 0;
+		touch-action: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	/* touches a little outside a button still count */
+	.actions button::before, .system button::before { content: ""; position: absolute; inset: calc(-0.5 * var(--gap)); }
+	.actions button {
+		position: absolute;
+		width: var(--button);
+		height: var(--button);
+		border-radius: 50%;
+		color: #000;
+		background: var(--tan);
+		border-color: #000;
+	}
+	.actions svg { width: 42%; height: 42%; fill: currentColor; }
+	.actions .rotl { left: 0; bottom: 0; } /* like B and A on a handheld: the main one higher and further out */
+	.actions .rotr { right: 0; top: 0; }
+	.actions .held { background: #dcb8a2; transform: translateY(1px); border-bottom-width: 1px; }
+
+	/* start, back and fullscreen are small and out of the thumbs' way, so they aren't pressed by accident */
+	.system {
+		grid-area: system;
+		align-self: end;
+		display: flex;
+		justify-content: center;
+		gap: var(--gap);
+	}
+	.system button { height: clamp(32px, 8vmin, 44px); min-width: clamp(64px, 18vmin, 96px); padding: 0 12px; border-radius: 999px; }
+	.system .held { background: var(--brown); color: var(--text); }
+	.system .fullscreen[hidden] { display: none; }
+
+	/* sideways: the game in the middle at full height, the D-pad and buttons low down at either side */
+	@media (orientation: landscape) {
+		body.touch {
+			--dpad: clamp(120px, 42vmin, 228px);
+			--button: clamp(56px, 19vmin, 104px);
+		}
+		body.touch .play-area {
+			grid-template-columns: max(var(--dpad), calc(2 * var(--button) + var(--gap))) minmax(0, 1fr) max(var(--dpad), calc(2 * var(--button) + var(--gap)));
+			grid-template-rows: minmax(0, 1fr);
+			grid-template-areas: "left stage right";
+		}
+		body.touch .stage { height: 100%; }
+		body.touch .deck { display: contents; }
+		.dpad { grid-area: left; align-self: end; justify-self: center; margin-bottom: 4vmin; }
+		.actions { grid-area: right; align-self: end; justify-self: center; margin-bottom: 4vmin; }
+		.system { grid-area: right; align-self: start; flex-wrap: wrap; }
+	}
 </style>
 </head>
 <body>
+	<div class="play-area">
 	<main class="stage" id="stage">
 		<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
 		<div class="overlay" id="overlay">
@@ -167,9 +320,31 @@
 			<div class="progress" id="progress" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" hidden><div></div></div>
 			<button class="play" id="play" hidden>Play</button>
 			<p class="status" id="status">&nbsp;</p>
-			<p class="touch-note">Needs a keyboard.</p>
+			<p class="touch-note">Touch controls play one player, or player 2 in versus.</p>
+			<p class="touch-only credit">Original game by <a href="https://stabyourself.net/nottetris2/">Maurice Guégan (Stabyourself.net)</a></p>
 		</div>
 	</main>
+	<div class="deck" aria-label="Touch controls">
+		<div class="system">
+			<button data-keys="Escape">Back</button>
+			<button data-keys="Enter">Start</button>
+			<button class="fullscreen" type="button" aria-label="Fullscreen" hidden>Full</button>
+		</div>
+		<div class="dpad" role="group" aria-label="Move and drop">
+			<svg viewBox="0 0 100 100" aria-hidden="true">
+				<g data-dir="up"><path class="arm" d="M37 4h26v33H37z"/><path class="arrow" d="M50 11l8 11H42z"/></g>
+				<g data-dir="down"><path class="arm" d="M37 63h26v33H37z"/><path class="arrow" d="M50 89l-8-11h16z"/></g>
+				<g data-dir="left"><path class="arm" d="M4 37h33v26H4z"/><path class="arrow" d="M11 50l11-8v16z"/></g>
+				<g data-dir="right"><path class="arm" d="M63 37h33v26H63z"/><path class="arrow" d="M89 50l-11 8V42z"/></g>
+				<path class="arm" d="M36 36h28v28H36z"/>
+			</svg>
+		</div>
+		<div class="actions" role="group" aria-label="Rotate">
+			<button class="rotl" data-keys="z Numpad1" aria-label="Rotate left"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 1-6.6 9.3l1.9-.6A5 5 0 1 0 12 7v3L7.5 6 12 2z"/></svg></button>
+			<button class="rotr" data-keys="x Numpad2" aria-label="Rotate right"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 0 6.6 9.3l-1.9-.6A5 5 0 1 1 12 7v3l4.5-4L12 2z"/></svg></button>
+		</div>
+	</div>
+	</div>
 
 	<section class="controls" aria-label="Controls">
 		<ul>
@@ -253,6 +428,107 @@
 			e.preventDefault();
 			showError('The graphics context was lost. Reload the page to keep playing.');
 		});
+
+		// on-screen controls. buttons hold down the keys in their data-keys while touched; the D-pad holds the
+		// arrow keys for the direction of the thumb. both send keyboard events, which the game reads like real
+		// ones (SDL looks at keyCode, key and code)
+		var KEYS = {
+			ArrowLeft: [37, 'ArrowLeft'], ArrowUp: [38, 'ArrowUp'], ArrowRight: [39, 'ArrowRight'], ArrowDown: [40, 'ArrowDown'],
+			Enter: [13, 'Enter'], Escape: [27, 'Escape'], z: [90, 'KeyZ'], x: [88, 'KeyX'],
+			Numpad1: [97, 'Numpad1', '1', 3], Numpad2: [98, 'Numpad2', '2', 3]
+		};
+		function sendKey(type, name) {
+			var k = KEYS[name];
+			var event = new KeyboardEvent(type, { key: k[2] || name, code: k[1], location: k[3] || 0, bubbles: true, cancelable: true });
+			Object.defineProperty(event, 'keyCode', { get: function () { return k[0]; } });
+			Object.defineProperty(event, 'which', { get: function () { return k[0]; } });
+			document.dispatchEvent(event);
+		}
+		function buzz() { if (navigator.vibrate) navigator.vibrate(8); }
+		function capture(element, e) { try { element.setPointerCapture(e.pointerId); } catch (error) {} } //keeps the touch on its control if it slides off
+
+		var touchQuery = window.matchMedia('(hover: none) and (pointer: coarse) and (max-width: 1366px)');
+		function updateTouch() { document.body.classList.toggle('touch', touchQuery.matches); }
+		updateTouch();
+		if (touchQuery.addEventListener) touchQuery.addEventListener('change', updateTouch); else touchQuery.addListener(updateTouch);
+
+		Array.prototype.forEach.call(document.querySelectorAll('.deck button[data-keys]'), function (button) {
+			var keys = button.getAttribute('data-keys').split(' ');
+			var held = false;
+			button.addEventListener('pointerdown', function (e) {
+				e.preventDefault();
+				capture(button, e);
+				if (held) return;
+				held = true;
+				button.classList.add('held');
+				if (!started) start();
+				keys.forEach(function (k) { sendKey('keydown', k); });
+				buzz();
+			});
+			function release() {
+				if (!held) return;
+				held = false;
+				button.classList.remove('held');
+				keys.forEach(function (k) { sendKey('keyup', k); });
+			}
+			['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) { button.addEventListener(type, release); });
+		});
+
+		(function () {
+			var dpad = document.querySelector('.dpad');
+			var arms = {};
+			Array.prototype.forEach.call(dpad.querySelectorAll('[data-dir]'), function (g) { arms[g.getAttribute('data-dir')] = g; });
+			var KEY = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+			var pointer = null, held = {};
+			function directions(e) { //which arrows a touch at e presses: none in the middle, two on the diagonals
+				var box = dpad.getBoundingClientRect();
+				var dx = e.clientX - (box.left + box.width / 2), dy = e.clientY - (box.top + box.height / 2);
+				var out = {};
+				if (Math.sqrt(dx * dx + dy * dy) < box.width * 0.12) return out;
+				var angle = Math.atan2(dy, dx) * 180 / Math.PI; //0 is right, 90 is down
+				//straight directions get 60 degrees each, diagonals the 30 between them
+				if (angle > -60 && angle < 60) out.right = true;
+				if (angle > 30 && angle < 150) out.down = true;
+				if (angle > 120 || angle < -120) out.left = true;
+				if (angle > -150 && angle < -30) out.up = true;
+				return out;
+			}
+			function update(next) {
+				var pressed = false;
+				Object.keys(KEY).forEach(function (dir) {
+					if (held[dir] && !next[dir]) { sendKey('keyup', KEY[dir]); arms[dir].classList.remove('held'); }
+					if (!held[dir] && next[dir]) { sendKey('keydown', KEY[dir]); arms[dir].classList.add('held'); pressed = true; }
+				});
+				held = next;
+				if (pressed) buzz();
+			}
+			dpad.addEventListener('pointerdown', function (e) {
+				e.preventDefault();
+				if (pointer !== null) return;
+				pointer = e.pointerId;
+				capture(dpad, e);
+				if (!started) start();
+				update(directions(e));
+			});
+			dpad.addEventListener('pointermove', function (e) { if (e.pointerId === pointer) update(directions(e)); });
+			function release(e) { if (e.pointerId === pointer) { pointer = null; update({}); } }
+			['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) { dpad.addEventListener(type, release); });
+		})();
+
+		document.addEventListener('contextmenu', function (e) { if (document.body.classList.contains('touch')) e.preventDefault(); });
+		var fullscreenButton = document.querySelector('.deck .fullscreen');
+		var stageElement = document.getElementById('stage');
+		if (document.fullscreenEnabled || document.webkitFullscreenEnabled) { //not on iPhones, where adding the page to the home screen does it
+			fullscreenButton.hidden = false;
+			fullscreenButton.addEventListener('click', function () {
+				var root = document.documentElement;
+				if (document.fullscreenElement || document.webkitFullscreenElement) {
+					(document.exitFullscreen || document.webkitExitFullscreen).call(document);
+				} else {
+					(root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+				}
+			});
+		}
 
 		var Module = {
 			arguments: {{{arguments}}},

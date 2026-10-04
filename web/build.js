@@ -42,5 +42,8 @@ const page = fs.readFileSync(path.join(__dirname, 'page', 'index.html'), 'utf8')
   .replace('{{memory}}', setting('INITIAL_MEMORY'))
   .replace('</title>', '</title>\n<meta name="generator" content="nottetris2 ' + version + '">');
 fs.writeFileSync(path.join(build, 'index.html'), page);
+for (const asset of ['manifest.webmanifest', 'icon.svg']) { //so the page can be added to a home screen and open full screen
+  fs.copyFileSync(path.join(__dirname, 'page', asset), path.join(build, asset));
+}
 fs.rmSync(path.join(build, 'theme'), { recursive: true, force: true });
 console.log('Built version ' + version + ' in ' + path.relative(process.cwd(), build) + ' - serve it with: npm run serve');
