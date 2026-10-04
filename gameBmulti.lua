@@ -8,16 +8,7 @@ function gameBmulti_load()
 	
 	beeped = {false, false, false}
 	
-	--figure out the multiplayer scale
-	mpscale = scale
-	while 274*mpscale > desktopwidth do
-		mpscale = mpscale - 1
-	end
-	physicsmpscale = mpscale/4
-	
-	mpfullscreenoffsetX = (desktopwidth-274*mpscale)/2
-	mpfullscreenoffsetY = (desktopheight-144*mpscale)/2
-	
+	fitversus()
 	if not fullscreen then
 		love.window.setMode( 274*mpscale, 144*mpscale, {fullscreen=fullscreen, vsync=vsync, msaa=4} )
 	end
@@ -78,6 +69,16 @@ function gameBmulti_load()
 	starttimer = love.timer.getTime()
 	newtime = starttimer
 	--first piece! hooray.
+end
+
+function fitversus() --the largest scale up to the single player one at which the wider versus screen fits, and where it goes
+	mpscale = scale
+	while 274*mpscale > desktopwidth and mpscale > 1 do
+		mpscale = mpscale - 1
+	end
+	physicsmpscale = mpscale/4
+	mpfullscreenoffsetX = math.floor((desktopwidth-274*mpscale)/2)
+	mpfullscreenoffsetY = math.floor((desktopheight-144*mpscale)/2)
 end
 
 function gameBmulti_draw()

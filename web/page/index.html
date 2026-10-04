@@ -291,6 +291,46 @@
 	.system .held { background: var(--brown); color: var(--text); }
 	.system .fullscreen[hidden] { display: none; }
 
+	/* outside the game the round buttons are A (select) and B (back), like a handheld's */
+	.actions .letter { display: none; font: 700 clamp(18px, 6vmin, 32px)/1 ui-monospace, Menlo, Consolas, monospace; }
+	body:not([data-mode="playing"]) .actions svg { display: none; }
+	body:not([data-mode="playing"]) .actions .letter { display: block; }
+
+	/* typing a name for the high score table: a field that brings up the keyboard, at the top so the
+	   keyboard doesn't cover it */
+	.namebar {
+		position: fixed;
+		z-index: 2;
+		top: var(--inset-t);
+		left: 50%;
+		transform: translateX(-50%);
+		width: min(92vw, 420px);
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 6px 8px;
+		padding: 10px 12px;
+		background: var(--panel);
+		border: 1px solid var(--brown);
+		border-radius: 10px;
+		box-shadow: 0 6px 24px #000a;
+	}
+	.namebar[hidden] { display: none; }
+	.namebar label { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+	.namebar input {
+		font: 700 20px/1 ui-monospace, Menlo, Consolas, monospace;
+		letter-spacing: 0.15em;
+		text-transform: lowercase;
+		color: var(--text);
+		background: #000;
+		border: 1px solid var(--line);
+		border-radius: 6px;
+		padding: 8px 10px;
+		min-width: 0;
+		-webkit-user-select: text;
+		user-select: text;
+	}
+	.namebar button { font: 600 15px/1 system-ui, sans-serif; color: #000; background: var(--tan); border: 0; border-radius: 6px; padding: 0 16px; }
+
 	/* sideways: the game in the middle at full height, the D-pad and buttons low down at either side */
 	@media (orientation: landscape) {
 		body.touch {
@@ -324,6 +364,11 @@
 			<p class="touch-only credit">Original game by <a href="https://stabyourself.net/nottetris2/">Maurice Guégan (Stabyourself.net)</a></p>
 		</div>
 	</main>
+	<form class="namebar" autocomplete="off" hidden>
+		<label for="name">New high score! Your name</label>
+		<input id="name" maxlength="6" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" inputmode="text">
+		<button type="submit">Done</button>
+	</form>
 	<div class="deck" aria-label="Touch controls">
 		<div class="system">
 			<button data-keys="Escape">Back</button>
@@ -340,8 +385,8 @@
 			</svg>
 		</div>
 		<div class="actions" role="group" aria-label="Rotate">
-			<button class="rotl" data-keys="z Numpad1" aria-label="Rotate left"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 1-6.6 9.3l1.9-.6A5 5 0 1 0 12 7v3L7.5 6 12 2z"/></svg></button>
-			<button class="rotr" data-keys="x Numpad2" aria-label="Rotate right"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 0 6.6 9.3l-1.9-.6A5 5 0 1 1 12 7v3l4.5-4L12 2z"/></svg></button>
+			<button class="rotl" data-keys="z Numpad1" data-menu-keys="Escape" aria-label="Rotate left, or back in menus"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 1-6.6 9.3l1.9-.6A5 5 0 1 0 12 7v3L7.5 6 12 2z"/></svg><span class="letter">B</span></button>
+			<button class="rotr" data-keys="x Numpad2" data-menu-keys="Enter" aria-label="Rotate right, or select in menus"><svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 0 6.6 9.3l-1.9-.6A5 5 0 1 1 12 7v3l4.5-4L12 2z"/></svg><span class="letter">A</span></button>
 		</div>
 	</div>
 	</div>
@@ -452,14 +497,29 @@
 		updateTouch();
 		if (touchQuery.addEventListener) touchQuery.addEventListener('change', updateTouch); else touchQuery.addListener(updateTouch);
 
+		//what the game is doing, which it puts in the page title: playing, typing a name or in the menus
+		var mode = 'menu';
+		function readMode() {
+			var next = /Playing/.test(document.title) ? 'playing' : /high score/.test(document.title) ? 'name' : 'menu';
+			if (next === mode) return;
+			mode = next;
+			document.body.setAttribute('data-mode', mode);
+			if (mode === 'name') openNameBar(); else closeNameBar();
+		}
+		document.body.setAttribute('data-mode', mode);
+		new MutationObserver(readMode).observe(document.querySelector('title'), { childList: true, characterData: true, subtree: true });
+
 		Array.prototype.forEach.call(document.querySelectorAll('.deck button[data-keys]'), function (button) {
-			var keys = button.getAttribute('data-keys').split(' ');
+			var playKeys = button.getAttribute('data-keys').split(' ');
+			var menuKeys = (button.getAttribute('data-menu-keys') || button.getAttribute('data-keys')).split(' ');
+			var keys = playKeys;
 			var held = false;
 			button.addEventListener('pointerdown', function (e) {
 				e.preventDefault();
 				capture(button, e);
 				if (held) return;
 				held = true;
+				keys = mode === 'playing' ? playKeys : menuKeys; //and released the same, even if the mode changes meanwhile
 				button.classList.add('held');
 				if (!started) start();
 				keys.forEach(function (k) { sendKey('keydown', k); });
@@ -514,6 +574,38 @@
 			function release(e) { if (e.pointerId === pointer) { pointer = null; update({}); } }
 			['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) { dpad.addEventListener(type, release); });
 		})();
+
+		//typing a name: the field's text is mirrored into the game as typed characters and backspaces
+		KEYS.Backspace = [8, 'Backspace'];
+		var nameBar = document.querySelector('.namebar'), nameInput = document.getElementById('name'), typed = '';
+		function tapKey(name) { sendKey('keydown', name); sendKey('keyup', name); }
+		function typeCharacter(c) {
+			var event = new KeyboardEvent('keypress', { key: c, bubbles: true, cancelable: true });
+			var code = c.charCodeAt(0);
+			['charCode', 'keyCode', 'which'].forEach(function (p) { Object.defineProperty(event, p, { get: function () { return code; } }); });
+			document.dispatchEvent(event);
+		}
+		function openNameBar() {
+			if (!document.body.classList.contains('touch')) return; //keyboards just type
+			typed = '';
+			nameInput.value = '';
+			nameBar.hidden = false;
+			nameInput.focus(); //browsers only bring up the keyboard for this after a tap, so the field is there to tap too
+		}
+		function closeNameBar() { nameBar.hidden = true; nameInput.blur(); }
+		nameInput.addEventListener('input', function () {
+			var value = nameInput.value.toLowerCase().replace(/[^0-9a-z ,._-]/g, '').slice(0, 6); //what the game can show
+			var same = 0;
+			while (same < typed.length && same < value.length && typed[same] === value[same]) same++;
+			for (var i = typed.length; i > same; i--) tapKey('Backspace');
+			for (var j = same; j < value.length; j++) typeCharacter(value[j]);
+			typed = value;
+			if (nameInput.value !== value) nameInput.value = value;
+		});
+		nameBar.addEventListener('submit', function (e) { e.preventDefault(); tapKey('Enter'); });
+		['keydown', 'keypress', 'keyup'].forEach(function (type) { //the field's own keys aren't the game's (which would also stop them typing into it)
+			nameInput.addEventListener(type, function (e) { e.stopPropagation(); });
+		});
 
 		document.addEventListener('contextmenu', function (e) { if (document.body.classList.contains('touch')) e.preventDefault(); });
 		var fullscreenButton = document.querySelector('.deck .fullscreen');
