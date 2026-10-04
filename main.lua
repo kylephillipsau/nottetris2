@@ -9,6 +9,7 @@ end
 function love.load()
 	gamestate = "boot"
 	--requires--
+	require "web"
 	require "controls"
 	require "game"
 	require "softbody"
@@ -30,7 +31,9 @@ function love.load()
 	
 	loadoptions()
 	
-	if fullscreen then
+	if WEB then
+		web_load()
+	elseif fullscreen then
 		togglefullscreen(true)
 	elseif scale ~= 5 then --conf.lua opens the window at scale 5
 		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=4} )
@@ -230,6 +233,9 @@ function step(dt)
 	if screen and screen.update then
 		screen.update(dt)
 	end
+	if WEB then
+		web_reportstate()
+	end
 end
 
 function love.draw()
@@ -242,7 +248,9 @@ function drawscreen() --draws the current screen, centred and clipped to its pla
 		return
 	end
 	love.graphics.push("all")
-	if fullscreen then
+	if WEB then
+		web_drawframe((screen.viewport or singleplayerviewport)())
+	elseif fullscreen then
 		local x, y, w, h = (screen.viewport or singleplayerviewport)()
 		love.graphics.translate(x, y)
 		love.graphics.setScissor(x, y, w, h)
@@ -456,12 +464,16 @@ function computescales() --largest scale that fits the desktop, and a comfortabl
 end
 
 function restorewindow() --back to the single player window size after versus mode
+	mpscale = nil
 	if not fullscreen then
 		love.window.setMode( 160*scale, 144*scale, {vsync=vsync, msaa=4} )
 	end
 end
 
 function togglefullscreen(fullscr)
+	if WEB then --the page sizes the game, and has its own fullscreen button
+		return
+	end
 	fullscreen = fullscr
 	love.mouse.setVisible( not fullscreen )
 	if fullscr == false then
@@ -540,6 +552,9 @@ function savehighscores()
 end
 
 function changescale(i)
+	if WEB then
+		return
+	end
 	love.window.setMode( 160*i, 144*i, {vsync=vsync, msaa=4} )
 	physicsscale = i/4
 end
