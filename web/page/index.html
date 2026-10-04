@@ -656,7 +656,13 @@
 		};
 
 		window.addEventListener('error', function (e) {
-			if (e.message === 'Script error.' && !e.filename) return; //another site's script (an extension or in-app browser), which says nothing and isn't the game's
+			//only the game's own scripts stop the game: browsers like Brave and in-app browsers add scripts of their
+			//own to every page, whose errors (often a bare "Script error." with no file) don't affect it
+			var ours = e.filename && e.filename.indexOf(location.origin) === 0;
+			if (!ours) {
+				console.warn('Ignored an error from outside the game:', e.message, e.filename || '(no file)');
+				return;
+			}
 			var where = e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '';
 			showError('Something went wrong. Reload the page to try again.', (e.message || 'Unknown error') + where);
 		});
