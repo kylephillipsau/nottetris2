@@ -629,6 +629,7 @@
 		}
 
 		var Module = {
+			onAbort: function (what) { engineFailed('Abort: ' + what); }, //the engine stopped (out of memory, a crash in the game)
 			arguments: {{{arguments}}},
 			INITIAL_MEMORY: {{memory}},
 			printErr: console.error.bind(console),
@@ -655,16 +656,16 @@
 			}
 		};
 
+		//only the game engine failing stops the game. browsers add scripts of their own to every page (Brave's
+		//wallet, ad blockers, in-app browsers), and their errors can look like the page's own (Brave's come
+		//from the page's address), so other errors are only logged
+		function engineFailed(detail) { showError('Something went wrong. Reload the page to try again.', detail); }
 		window.addEventListener('error', function (e) {
-			//only the game's own scripts stop the game: browsers like Brave and in-app browsers add scripts of their
-			//own to every page, whose errors (often a bare "Script error." with no file) don't affect it
-			var ours = e.filename && e.filename.indexOf(location.origin) === 0;
-			if (!ours) {
+			if (/\/(love|game)\.js(\?|$)/.test(e.filename || '')) {
+				engineFailed((e.message || 'Unknown error') + ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')');
+			} else {
 				console.warn('Ignored an error from outside the game:', e.message, e.filename || '(no file)');
-				return;
 			}
-			var where = e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '';
-			showError('Something went wrong. Reload the page to try again.', (e.message || 'Unknown error') + where);
 		});
 
 		var generator = document.querySelector('meta[name=generator]');
