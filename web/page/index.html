@@ -217,8 +217,10 @@
 		grid-area: deck;
 		display: grid;
 		grid-template-columns: var(--dpad) 1fr calc(2 * var(--button) + var(--gap));
-		grid-template-rows: 1fr auto;
-		grid-template-areas: "system system system" "dpad . actions";
+		/* spare height goes between the game and the controls, so start and back sit just above the
+		   thumbs' controls and everything is in reach */
+		grid-template-rows: minmax(0, 1fr) auto auto;
+		grid-template-areas: ". . ." "system system system" "dpad . actions";
 		align-items: end;
 		gap: var(--gap);
 	}
@@ -280,7 +282,7 @@
 	/* start, back and fullscreen are small and out of the thumbs' way, so they aren't pressed by accident */
 	.system {
 		grid-area: system;
-		align-self: start;
+		align-self: end;
 		display: flex;
 		justify-content: center;
 		gap: var(--gap);
