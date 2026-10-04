@@ -12,7 +12,13 @@ local webmode
 
 function web_load()
 	fullscreen = true --drawn centred, and the game never resizes the window itself
-	love.window.setMode(800, 720, {resizable = true, highdpi = true, vsync = vsync, msaa = 4})
+	--some phones can't give a full resolution canvas smoothed edges (msaa), so ask for less until one works
+	for _, settings in ipairs({{highdpi = true, msaa = 4}, {highdpi = true, msaa = 0}, {highdpi = false, msaa = 0}}) do
+		local ok, made = pcall(love.window.setMode, 800, 720, {resizable = true, highdpi = settings.highdpi, vsync = vsync, msaa = settings.msaa})
+		if ok and made then
+			break
+		end
+	end
 	web_fit()
 end
 

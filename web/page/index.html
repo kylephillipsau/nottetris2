@@ -107,6 +107,8 @@
 	}
 	.progress div { height: 100%; width: 0; background: var(--tan); transition: width 0.15s; }
 	.status { color: var(--muted); margin: 0; min-height: 1.4em; }
+	.error-detail { margin: -12px 0 0; max-width: 90%; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; color: #6f6258; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+	.error-detail[hidden] { display: none; }
 	.play {
 		font: 600 16px/1 system-ui, sans-serif;
 		color: #000;
@@ -360,6 +362,7 @@
 			<div class="progress" id="progress" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" hidden><div></div></div>
 			<button class="play" id="play" hidden>Play</button>
 			<p class="status" id="status">&nbsp;</p>
+			<p class="error-detail" id="error-detail" hidden></p>
 			<p class="touch-note">Touch controls play one player, or player 2 in versus.</p>
 			<p class="touch-only credit">Original game by <a href="https://stabyourself.net/nottetris2/">Maurice Guégan (Stabyourself.net)</a></p>
 		</div>
@@ -410,6 +413,7 @@
 		var bar = document.querySelector('#progress div');
 		var progress = document.getElementById('progress');
 		var statusText = document.getElementById('status');
+		var errorDetail = document.getElementById('error-detail');
 		var playButton = document.getElementById('play');
 		var canvas = document.getElementById('canvas');
 		var engineLoaded = false, started = false, failed = false;
@@ -420,8 +424,10 @@
 			progress.setAttribute('aria-valuenow', percent);
 		}
 
-		function showError(message) {
+		function showError(message, detail) { //detail: what went wrong, small, to pass on in a bug report
 			failed = true;
+			errorDetail.textContent = detail || '';
+			errorDetail.hidden = !detail;
 			progress.hidden = true;
 			playButton.hidden = true;
 			overlay.hidden = false;
@@ -649,9 +655,11 @@
 			}
 		};
 
-		window.onerror = function () {
-			showError('Something went wrong. Reload the page to try again.');
-		};
+		window.addEventListener('error', function (e) {
+			if (e.message === 'Script error.' && !e.filename) return; //another site's script (an extension or in-app browser), which says nothing and isn't the game's
+			var where = e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '';
+			showError('Something went wrong. Reload the page to try again.', (e.message || 'Unknown error') + where);
+		});
 
 		var generator = document.querySelector('meta[name=generator]');
 		if (generator) console.info(generator.content);
