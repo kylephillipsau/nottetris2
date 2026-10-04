@@ -20,7 +20,7 @@ npm start
 
 Then open http://localhost:8080. `npm start` rebuilds the game from the current source and serves it; run `npm run build` and `npm run serve` separately if you prefer. The output in `web/build/` is a static site that any web server can host.
 
-The page around the game is `web/page/index.html`. On phones and tablets (a touch screen up to 1024 pixels wide) it shows on-screen controls, below the game or either side of it when held sideways; they send the same keys as a keyboard, so they also play player 2 in versus. Every push to `master` publishes the build to GitHub Pages (`.github/workflows/pages.yml`); enable it once under Settings > Pages > Source: GitHub Actions.
+The page around the game is `web/page/index.html`. On phones and tablets it shows on-screen controls laid out like a handheld: the controller below the game, or either side of it when held sideways. They scale with the screen, the D-pad rolls between directions (diagonals drop while moving), and they send the same keys as a keyboard, so they also play player 2 in versus. Added to the home screen, the page opens full screen (`web/page/manifest.webmanifest`). Every push to `master` publishes the build to GitHub Pages (`.github/workflows/pages.yml`); enable it once under Settings > Pages > Source: GitHub Actions.
 
 ## Controls
 - Menus: arrow keys, Enter to select, Escape to go back
